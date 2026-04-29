@@ -23,25 +23,25 @@ const checkDuplicate = (newText, previousSubmissions) => {
 
   const tfidf = new TfIdf();
   tfidf.addDocument(newText); // Document 0
-  
+
   previousSubmissions.forEach(sub => {
     tfidf.addDocument(sub.extractedText || ''); // Document 1, 2, ...
   });
 
   const numDocs = previousSubmissions.length + 1;
   const terms = new Set();
-  
+
   // collect all terms
-  for(let i=0; i<numDocs; i++) {
+  for (let i = 0; i < numDocs; i++) {
     const termStats = tfidf.listTerms(i);
     termStats.forEach(item => terms.add(item.term));
   }
-  
+
   const termArray = Array.from(terms);
-  
+
   // build vectors
   const vectors = [];
-  for(let i=0; i<numDocs; i++) {
+  for (let i = 0; i < numDocs; i++) {
     vectors[i] = termArray.map(term => tfidf.tfidf(term, i));
   }
 
@@ -53,13 +53,13 @@ const checkDuplicate = (newText, previousSubmissions) => {
     const similarity = cosineSimilarity(vectors[0], vectors[i]) * 100; // to percentage
     if (similarity > highestSimilarity) {
       highestSimilarity = similarity;
-      matchedSubmissionId = previousSubmissions[i-1]._id;
-      matchedStudentId = previousSubmissions[i-1].studentId;
+      matchedSubmissionId = previousSubmissions[i - 1]._id;
+      matchedStudentId = previousSubmissions[i - 1].studentId;
     }
   }
 
   return {
-    isDuplicate: highestSimilarity >= 70,
+    isDuplicate: highestSimilarity >= 60,
     similarityScore: Math.round(highestSimilarity),
     matchedWith: matchedStudentId
   };

@@ -2,7 +2,7 @@ const Assignment = require('../models/Assignment');
 
 exports.createAssignment = async (req, res) => {
   try {
-    const { title, subject, description, deadline } = req.body;
+    const { title, subject, description, deadline, classroomId } = req.body;
 
     const assignment = await Assignment.create({
       title,
@@ -10,6 +10,7 @@ exports.createAssignment = async (req, res) => {
       description,
       deadline,
       teacherId: req.user._id,
+      classroomId: classroomId || null,
     });
 
     res.status(201).json(assignment);
@@ -46,6 +47,17 @@ exports.getAssignmentById = async (req, res) => {
       return res.status(404).json({ message: 'Assignment not found' });
     }
     res.json(assignment);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getClassroomAssignments = async (req, res) => {
+  try {
+    const assignments = await Assignment.find({ classroomId: req.params.classroomId })
+      .populate('teacherId', 'fullName')
+      .sort({ createdAt: -1 });
+    res.json(assignments);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -36,6 +36,16 @@ const AssignmentSubmissionsView = () => {
     }
   };
 
+  const handleStatusChange = async (subId, status) => {
+    try {
+      await api.put(`/submissions/${subId}/status`, { status });
+      toast.success(`Submission ${status}`);
+      fetchSubmissions();
+    } catch (err) {
+      toast.error('Failed to update status');
+    }
+  };
+
   const filtered = submissions.filter(s => 
     s.studentId?.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.studentId?.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -135,8 +145,14 @@ const AssignmentSubmissionsView = () => {
                       <span className="text-gray-400 italic">N/A</span>
                     )}
                   </td>
-                  <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                    <a href={submission.fileUrl} target="_blank" rel="noreferrer" className="text-primary-600 hover:text-primary-900 inline-flex items-center">
+                  <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 flex justify-end gap-2 items-center">
+                    {submission.status === 'quarantine' && (
+                      <>
+                        <button onClick={() => handleStatusChange(submission._id, 'accepted')} className="text-green-600 hover:text-green-900 border border-green-200 bg-green-50 px-2 py-1 rounded">Accept</button>
+                        <button onClick={() => handleStatusChange(submission._id, 'rejected')} className="text-red-600 hover:text-red-900 border border-red-200 bg-red-50 px-2 py-1 rounded">Reject</button>
+                      </>
+                    )}
+                    <a href={submission.fileUrl} target="_blank" rel="noreferrer" className="text-primary-600 hover:text-primary-900 inline-flex items-center ml-2">
                       <ExternalLink className="h-4 w-4 mr-1" /> View
                     </a>
                   </td>

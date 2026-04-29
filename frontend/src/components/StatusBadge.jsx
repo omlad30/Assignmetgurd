@@ -23,6 +23,13 @@ const StatusBadge = ({ status }) => {
           AI Suspected
         </span>
       );
+    case 'quarantine':
+      return (
+        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+          <AlertTriangle className="w-3.5 h-3.5 mr-1" />
+          Under Review
+        </span>
+      );
     case 'pending':
     default:
       return (

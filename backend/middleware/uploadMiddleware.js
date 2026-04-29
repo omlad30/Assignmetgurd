@@ -7,11 +7,12 @@ const fileFilter = (req, file, cb) => {
   if (
     file.mimetype === 'application/pdf' ||
     file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-    file.mimetype === 'application/msword'
+    file.mimetype === 'application/msword' ||
+    file.mimetype.startsWith('image/')
   ) {
     cb(null, true);
   } else {
-    cb(new Error('Only PDF and DOCX files are allowed!'), false);
+    cb(new Error('Only PDF, DOCX, and Image files are allowed!'), false);
   }
 };
 

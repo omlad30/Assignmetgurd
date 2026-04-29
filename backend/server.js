@@ -11,6 +11,7 @@ require('./config/passport'); // Passport configured
 const authRoutes = require('./routes/auth');
 const assignmentRoutes = require('./routes/assignments');
 const submissionRoutes = require('./routes/submissions');
+const classroomRoutes = require('./routes/classrooms');
 
 // Initialize app
 const app = express();
@@ -37,6 +38,7 @@ app.use(passport.initialize());
 app.use('/api/auth', authRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/submissions', submissionRoutes);
+app.use('/api/classrooms', classroomRoutes);
 
 // Root Endpoint
 app.get('/', (req, res) => {

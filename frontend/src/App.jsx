@@ -10,6 +10,8 @@ import TeacherDashboard from './pages/TeacherDashboard';
 import SubmitAssignment from './pages/SubmitAssignment';
 import AssignmentResult from './pages/AssignmentResult';
 import AssignmentSubmissionsView from './pages/AssignmentSubmissionsView';
+import ClassroomView from './pages/ClassroomView';
+import StudentClassroomView from './pages/StudentClassroomView';
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -41,6 +43,11 @@ function App() {
               <StudentDashboard />
             </ProtectedRoute>
           } />
+          <Route path="/student/classroom/:id" element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <StudentClassroomView />
+            </ProtectedRoute>
+          } />
           <Route path="/submit/:id" element={
             <ProtectedRoute allowedRoles={['student']}>
               <SubmitAssignment />
@@ -56,6 +63,11 @@ function App() {
           <Route path="/teacher" element={
             <ProtectedRoute allowedRoles={['teacher']}>
               <TeacherDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/classroom/:id" element={
+            <ProtectedRoute allowedRoles={['teacher']}>
+              <ClassroomView />
             </ProtectedRoute>
           } />
           <Route path="/assignment-results/:id" element={

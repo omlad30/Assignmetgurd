@@ -7,6 +7,49 @@ const { checkAiContent } = require('../utils/geminiCheck');
 const sendEmail = require('../utils/sendEmail');
 const cloudinary = require('../config/cloudinary');
 
+exports.checkDraft = async (req, res) => {
+  try {
+    const { assignmentId } = req.body;
+    
+    if (!req.file) {
+      return res.status(400).json({ message: 'Please upload a PDF, DOCX, or Image file' });
+    }
+
+    const assignment = await Assignment.findById(assignmentId);
+    if (!assignment) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+
+    // 1. Extract text from file buffer
+    let text = '';
+    try {
+      text = await extractText(req.file.buffer, req.file.mimetype);
+    } catch (err) {
+      return res.status(400).json({ message: err.message });
+    }
+
+    if (!text || text.trim().length === 0) {
+      return res.status(400).json({ message: 'Could not extract text or file is empty.' });
+    }
+
+    // 2. Duplicate check
+    const previousSubmissions = await Submission.find({ assignmentId });
+    const duplicateResult = checkDuplicate(text, previousSubmissions);
+
+    // 3. AI Content Check
+    const aiResult = await checkAiContent(text);
+
+    // Return the results without saving to DB
+    res.status(200).json({
+      similarityScore: duplicateResult.similarityScore,
+      aiScore: aiResult.ai_probability,
+      message: 'Draft check completed successfully. This attempt was not saved.'
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 exports.submitAssignment = async (req, res) => {
   try {
     const { assignmentId } = req.body;
@@ -26,8 +69,13 @@ exports.submitAssignment = async (req, res) => {
     }
 
     const existingSubmission = await Submission.findOne({ assignmentId, studentId });
-    if (existingSubmission) {
+    if (existingSubmission && existingSubmission.status !== 'rejected') {
       return res.status(400).json({ message: 'You have already submitted this assignment.' });
+    }
+
+    if (existingSubmission && existingSubmission.status === 'rejected') {
+      await Submission.findByIdAndDelete(existingSubmission._id);
+      assignment.totalSubmissions = Math.max(0, assignment.totalSubmissions - 1);
     }
 
     // 1. Extract text from file buffer
@@ -70,7 +118,17 @@ exports.submitAssignment = async (req, res) => {
       rejectionReason = aiResult.reason || 'High AI-generation probability.';
     }
 
-    // 5. Save submission
+    // If rejected due to similarity or AI, set to quarantine
+    if (status === 'rejected' || status === 'ai_flagged') {
+      status = 'quarantine';
+      sendEmail({
+        email: req.user.email,
+        subject: `Submission Under Review: ${assignment.title}`,
+        message: `Hello,\n\nYour submission for "${assignment.title}" has been flagged and placed under review by your teacher.\nReason: ${rejectionReason}\n\nPlease wait for your teacher's decision.`,
+      });
+    }
+
+    // 5. Save submission if accepted
     const submission = await Submission.create({
       assignmentId,
       studentId,
@@ -89,17 +147,19 @@ exports.submitAssignment = async (req, res) => {
     assignment.totalSubmissions += 1;
     await assignment.save();
 
-    // 6. Emails
-    sendEmail({
-      email: req.user.email,
-      subject: `Submission Received: ${assignment.title}`,
-      message: `Your assignment "${assignment.title}" has been successfully received. Status: ${status}.\n\nReason: ${rejectionReason}`,
-    });
+    // 6. Emails for successful or quarantined submission
+    if (status === 'accepted') {
+      sendEmail({
+        email: req.user.email,
+        subject: `Submission Successful: ${assignment.title}`,
+        message: `Your assignment "${assignment.title}" has been successfully received and passed all automated checks.`,
+      });
+    }
 
     sendEmail({
       email: assignment.teacherId.email,
-      subject: `New Submission: ${assignment.title}`,
-      message: `Student ${req.user.fullName} has submitted assignment "${assignment.title}".\nSimilarity: ${duplicateResult.similarityScore}%\nAI Score: ${aiResult.ai_probability}%`,
+      subject: status === 'quarantine' ? `Action Required: Flagged Submission for ${assignment.title}` : `New Submission: ${assignment.title}`,
+      message: `Student ${req.user.fullName} has submitted assignment "${assignment.title}".\nStatus: ${status}\nSimilarity: ${duplicateResult.similarityScore}%\nAI Score: ${aiResult.ai_probability}%${status === 'quarantine' ? '\n\nPlease review this submission in your dashboard.' : ''}`,
     });
 
     res.status(201).json(submission);
@@ -138,7 +198,9 @@ exports.getStudentSubmissions = async (req, res) => {
 exports.gradeSubmission = async (req, res) => {
   try {
     const { grade } = req.body;
-    const submission = await Submission.findById(req.params.id);
+    const submission = await Submission.findById(req.params.id)
+      .populate('studentId')
+      .populate('assignmentId');
 
     if (!submission) {
       return res.status(404).json({ message: 'Submission not found' });
@@ -146,6 +208,44 @@ exports.gradeSubmission = async (req, res) => {
 
     submission.grade = grade;
     await submission.save();
+
+    // Send email to student about their grade
+    sendEmail({
+      email: submission.studentId.email,
+      subject: `Assignment Graded: ${submission.assignmentId.title}`,
+      message: `Hello ${submission.studentId.fullName},\n\nYour assignment "${submission.assignmentId.title}" has been graded by your teacher.\n\nGrade Received: ${grade}\n\nLog in to your dashboard to view more details.`,
+    });
+
+    res.json(submission);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.updateSubmissionStatus = async (req, res) => {
+  try {
+    const { status } = req.body; // 'accepted' or 'rejected'
+    const submission = await Submission.findById(req.params.id)
+      .populate('studentId')
+      .populate('assignmentId');
+
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' });
+    }
+
+    if (!['accepted', 'rejected'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    submission.status = status;
+    await submission.save();
+
+    // Notify student of decision
+    sendEmail({
+      email: submission.studentId.email,
+      subject: `Update on Flagged Submission: ${submission.assignmentId.title}`,
+      message: `Hello ${submission.studentId.fullName},\n\nYour teacher has reviewed your flagged submission for "${submission.assignmentId.title}".\n\nDecision: ${status.toUpperCase()}\n\n${status === 'rejected' ? 'Please submit a new, original attempt if permitted by your teacher.' : 'Your submission has been accepted for grading.'}`,
+    });
 
     res.json(submission);
   } catch (error) {
