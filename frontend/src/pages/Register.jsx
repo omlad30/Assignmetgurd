@@ -12,7 +12,8 @@ const Register = () => {
     password: '',
     role: 'student',
     classInfo: '',
-    subject: ''
+    subject: '',
+    secretCode: ''
   });
   const { loginWithToken } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -115,6 +116,22 @@ const Register = () => {
                 />
               </div>
             </div>
+
+            {formData.role === 'teacher' && (
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  name="secretCode"
+                  type="password"
+                  required
+                  className="appearance-none rounded-xl relative block w-full pl-10 px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  placeholder="Teacher Access Code (e.g., admin123)"
+                  onChange={handleChange}
+                />
+              </div>
+            )}
           </div>
 
           <div>

@@ -10,7 +10,15 @@ const generateToken = (id) => {
 
 exports.registerUser = async (req, res) => {
   try {
-    const { fullName, email, password, role, classInfo, subject } = req.body;
+    const { fullName, email, password, role, classInfo, subject, secretCode } = req.body;
+
+    // Security check: Only allow teacher registration if the correct secret code is provided
+    if (role === 'teacher') {
+      const expectedCode = process.env.TEACHER_SECRET_CODE || 'admin123';
+      if (secretCode !== expectedCode) {
+        return res.status(403).json({ message: 'Invalid Teacher Access Code' });
+      }
+    }
 
     const userExists = await User.findOne({ email });
     if (userExists) {
