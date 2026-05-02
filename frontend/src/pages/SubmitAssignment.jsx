@@ -164,19 +164,29 @@ const SubmitAssignment = () => {
               </div>
 
               {draftResult && (
-                <div className="mb-6 p-4 rounded-lg bg-blue-50 border border-blue-200">
-                  <h3 className="text-lg font-bold text-blue-900 mb-2">Draft Check Results</h3>
-                  <p className="text-sm text-blue-800">This was just a check. Your teacher has not seen this yet.</p>
-                  <div className="mt-3 flex flex-wrap gap-4">
-                    <div className="bg-white px-4 py-2 rounded shadow-sm flex flex-col">
-                      <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">Similarity Score</span>
-                      <span className={`text-xl font-extrabold ${draftResult.similarityScore > 60 ? 'text-red-600' : 'text-green-600'}`}>{draftResult.similarityScore}%</span>
+                <div className="mb-6 p-5 rounded-xl bg-blue-50 border border-blue-200 shadow-sm transition-all duration-300">
+                  <h3 className="text-xl font-bold text-blue-900 mb-2 flex items-center gap-2">
+                    <span className="bg-blue-200 text-blue-800 p-1 rounded">✨</span> Pre-Flight Check Results
+                  </h3>
+                  <p className="text-sm text-blue-800 mb-4 font-medium">This was just a check. Your teacher has not seen this yet.</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="bg-white p-4 rounded-lg shadow-sm flex flex-col items-center justify-center border border-gray-100">
+                      <span className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Similarity Score</span>
+                      <span className={`text-3xl font-extrabold ${draftResult.similarityScore > 60 ? 'text-red-600' : 'text-green-600'}`}>{draftResult.similarityScore}%</span>
                     </div>
-                    <div className="bg-white px-4 py-2 rounded shadow-sm flex flex-col">
-                      <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">AI Probability</span>
-                      <span className={`text-xl font-extrabold ${draftResult.aiScore > 80 ? 'text-red-600' : 'text-green-600'}`}>{draftResult.aiScore}%</span>
+                    <div className="bg-white p-4 rounded-lg shadow-sm flex flex-col items-center justify-center border border-gray-100">
+                      <span className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">AI Probability</span>
+                      <span className={`text-3xl font-extrabold ${draftResult.aiScore > 80 ? 'text-red-600' : 'text-green-600'}`}>{draftResult.aiScore}%</span>
                     </div>
                   </div>
+
+                  {draftResult.feedback && (
+                    <div className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-primary-500">
+                      <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-2 text-primary-600">AI Tutor Feedback</h4>
+                      <p className="text-gray-700 italic">"{draftResult.feedback}"</p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -194,7 +204,7 @@ const SubmitAssignment = () => {
                   disabled={loading || draftLoading || !file}
                   className={`inline-flex justify-center py-2 px-4 border border-indigo-300 shadow-sm text-sm font-bold rounded-lg text-indigo-700 bg-indigo-50 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${loading || draftLoading || !file ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  {draftLoading ? 'Checking...' : 'Check Draft (Private)'}
+                  {draftLoading ? 'Checking...' : 'Run Pre-Flight Check'}
                 </button>
                 <button
                   type="submit"

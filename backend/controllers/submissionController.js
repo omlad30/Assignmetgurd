@@ -3,7 +3,7 @@ const Assignment = require('../models/Assignment');
 const User = require('../models/User');
 const extractText = require('../utils/extractText');
 const { checkDuplicate } = require('../utils/duplicateCheck');
-const { checkAiContent } = require('../utils/geminiCheck');
+const { checkAiContent, checkAiContentDraft } = require('../utils/geminiCheck');
 const sendEmail = require('../utils/sendEmail');
 const cloudinary = require('../config/cloudinary');
 
@@ -36,14 +36,15 @@ exports.checkDraft = async (req, res) => {
     const previousSubmissions = await Submission.find({ assignmentId });
     const duplicateResult = checkDuplicate(text, previousSubmissions);
 
-    // 3. AI Content Check
-    const aiResult = await checkAiContent(text);
+    // 3. AI Content Check with Constructive Feedback
+    const aiResult = await checkAiContentDraft(text);
 
     // Return the results without saving to DB
     res.status(200).json({
       similarityScore: duplicateResult.similarityScore,
       aiScore: aiResult.ai_probability,
-      message: 'Draft check completed successfully. This attempt was not saved.'
+      feedback: aiResult.feedback,
+      message: 'Pre-Flight check completed successfully. This attempt was not saved.'
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

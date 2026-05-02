@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
 import { toast } from 'react-toastify';
-import { PlusCircle, Users, Copy, Check } from 'lucide-react';
+import { PlusCircle, Users, Copy, Check, BookOpen } from 'lucide-react';
 
 const TeacherDashboard = () => {
   const [classrooms, setClassrooms] = useState([]);
@@ -104,9 +104,21 @@ const TeacherDashboard = () => {
           </div>
         ))}
         {classrooms.length === 0 && (
-          <div className="col-span-full py-16 text-center border-2 border-dashed border-gray-300 rounded-xl bg-gray-50">
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No classrooms yet</h3>
-            <p className="mt-1 text-sm text-gray-500">Create a classroom to get an invite code for your students.</p>
+          <div className="col-span-full flex flex-col items-center justify-center py-20 px-4 bg-white rounded-3xl border border-dashed border-gray-300 shadow-sm">
+            <div className="h-24 w-24 bg-primary-50 text-primary-500 rounded-full flex items-center justify-center mb-6">
+              <BookOpen className="h-12 w-12" />
+            </div>
+            <h3 className="text-2xl font-extrabold text-gray-900 mb-2">No classrooms yet</h3>
+            <p className="text-gray-500 text-center max-w-sm mb-8 text-lg">
+              Create your first classroom to generate an invite code and start managing assignments.
+            </p>
+            <button
+              onClick={() => setShowModal(true)}
+              className="inline-flex items-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-base font-bold text-white bg-primary-600 hover:bg-primary-700 shadow-primary-500/30 transition-all transform hover:-translate-y-1"
+            >
+              <PlusCircle className="-ml-1 mr-2 h-5 w-5" />
+              Create Classroom
+            </button>
           </div>
         )}
       </div>
