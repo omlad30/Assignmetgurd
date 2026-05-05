@@ -107,13 +107,29 @@ const SubmitAssignment = () => {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-        <div className="bg-gradient-to-r from-primary-600 to-indigo-700 px-6 py-8 sm:p-10">
-          <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
-            Submit Assignment
-          </h2>
-          <p className="mt-2 text-lg text-primary-100">
-            {assignment?.title}
-          </p>
+        <div className="bg-gradient-to-r from-primary-600 to-indigo-700 px-6 py-8 sm:p-10 text-white">
+          <div className="flex justify-between items-start flex-col sm:flex-row gap-4">
+            <div>
+              <h2 className="text-3xl font-extrabold sm:text-4xl">
+                Submit: {assignment?.title}
+              </h2>
+              {assignment?.subject && (
+                <span className="inline-block mt-2 px-2 py-1 bg-white/20 rounded text-xs font-bold uppercase tracking-wider text-primary-100 backdrop-blur-sm">
+                  {assignment.subject}
+                </span>
+              )}
+              <div className="mt-4 text-base text-white/90 bg-black/10 p-4 rounded-lg max-w-2xl border border-white/10 shadow-inner">
+                <p className="font-semibold mb-1 text-sm text-primary-200">Assignment Details:</p>
+                <p className="whitespace-pre-wrap">{assignment?.description || 'No description provided for this assignment.'}</p>
+              </div>
+            </div>
+            {assignment?.deadline && (
+              <div className="text-left sm:text-right bg-white/10 p-3 rounded-lg backdrop-blur-sm border border-white/20 shadow-sm shrink-0">
+                <p className="text-xs font-bold uppercase tracking-wider text-primary-200">Deadline</p>
+                <p className="font-medium text-lg">{new Date(assignment.deadline).toLocaleDateString()}</p>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="px-6 py-8 sm:p-10 bg-white">

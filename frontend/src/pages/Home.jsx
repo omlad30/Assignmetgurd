@@ -26,7 +26,16 @@ const Home = () => {
         toast.error("Google authentication failed.");
       });
     }
-  }, [user, navigate, location, loginWithToken]);
+  }, [user, navigate, location.search, loginWithToken]);
+
+  useEffect(() => {
+    if (location.hash === '#login-form') {
+      const el = document.getElementById('login-form');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [location.hash]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -104,7 +113,7 @@ const Home = () => {
         </div>
 
         {/* Right Side - Login Form */}
-        <div className="flex-1 w-full max-w-md mx-auto">
+        <div className="flex-1 w-full max-w-md mx-auto" id="login-form">
           <div className="glass-panel p-6 sm:p-10 relative">
             <div>
               <div className="mx-auto h-12 w-12 sm:h-14 sm:w-14 bg-gradient-to-tr from-primary-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-primary-500/30 mb-4 transform -rotate-3 hover:rotate-0 transition-transform duration-300">
