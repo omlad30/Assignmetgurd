@@ -63,6 +63,35 @@ exports.getClassroomAssignments = async (req, res) => {
   }
 };
 
+exports.deleteAssignment = async (req, res) => {
+  try {
+    const assignment = await Assignment.findById(req.params.id);
+    if (!assignment) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+    
+    // Ensure only the teacher who created it can delete it (allow legacy assignments with no teacherId to be deleted)
+    if (assignment.teacherId && assignment.teacherId.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ message: 'Not authorized to delete this assignment' });
+    }
+
+    await Assignment.findByIdAndDelete(req.params.id);
+    
+    // Optionally delete related submissions (omitted for brevity, or add if needed)
+    const Submission = require('../models/Submission');
+    await Submission.deleteMany({ assignmentId: req.params.id });
+
+    // Emit real-time socket event to all students in the classroom
+    if (req.io && assignment.classroomId) {
+      req.io.to(`classroom_${assignment.classroomId}`).emit('assignment_deleted', req.params.id);
+    }
+
+    res.json({ message: 'Assignment removed' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 exports.getAssignmentAnalytics = async (req, res) => {
   try {
     const Submission = require('../models/Submission');

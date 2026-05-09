@@ -66,14 +66,55 @@ const AnalyticsDashboard = ({ assignmentId }) => {
             {data.graphData.nodes.length > 0 ? (
               <ForceGraph2D
                 ref={graphRef}
-                width={800}
                 height={400}
                 graphData={data.graphData}
                 nodeLabel="name"
-                nodeColor={() => '#8b5cf6'}
-                linkColor={() => '#f87171'}
-                linkWidth={(link) => link.value / 10}
+                nodeRelSize={6}
+                linkColor={(link) => link.value > 80 ? 'rgba(239, 68, 68, 0.8)' : link.value > 50 ? 'rgba(249, 115, 22, 0.6)' : 'rgba(156, 163, 175, 0.4)'}
+                linkWidth={(link) => Math.max(1, link.value / 15)}
                 linkLabel="label"
+                linkDirectionalArrowLength={4}
+                linkDirectionalArrowRelPos={1}
+                linkCurvature={0.2}
+                d3VelocityDecay={0.3}
+                nodeCanvasObject={(node, ctx, globalScale) => {
+                  const label = node.name;
+                  const fontSize = 12 / globalScale;
+                  ctx.font = `bold ${fontSize}px Inter, sans-serif`;
+                  const textWidth = ctx.measureText(label).width;
+                  const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.8);
+
+                  // Draw glow
+                  ctx.shadowColor = 'rgba(139, 92, 246, 0.4)';
+                  ctx.shadowBlur = 10;
+                  
+                  // Draw badge background
+                  ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                  ctx.beginPath();
+                  ctx.roundRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2, bckgDimensions[0], bckgDimensions[1], 4 / globalScale);
+                  ctx.fill();
+                  
+                  // Reset shadow for text
+                  ctx.shadowBlur = 0;
+
+                  // Draw border
+                  ctx.strokeStyle = '#8b5cf6';
+                  ctx.lineWidth = 1 / globalScale;
+                  ctx.stroke();
+
+                  // Draw text
+                  ctx.textAlign = 'center';
+                  ctx.textBaseline = 'middle';
+                  ctx.fillStyle = '#4c1d95';
+                  ctx.fillText(label, node.x, node.y);
+
+                  node.__bckgDimensions = bckgDimensions;
+                }}
+                nodePointerAreaPaint={(node, color, ctx) => {
+                  ctx.fillStyle = color;
+                  const bckgDimensions = node.__bckgDimensions;
+                  bckgDimensions && ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2, bckgDimensions[0], bckgDimensions[1]);
+                }}
               />
             ) : (
               <p className="text-gray-400">No similarities detected in the network.</p>

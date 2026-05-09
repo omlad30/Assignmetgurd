@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { toast } from 'react-toastify';
 import { UploadCloud, File, AlertCircle } from 'lucide-react';
+import SocraticTutor from '../components/SocraticTutor';
 
 const SubmitAssignment = () => {
   const { id } = useParams();
@@ -234,6 +235,7 @@ const SubmitAssignment = () => {
           </form>
         </div>
       </div>
+      <SocraticTutor assignmentId={id} />
     </div>
   );
 };

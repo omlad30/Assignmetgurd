@@ -30,7 +30,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-200">
       <Navbar />
       <main>
         <Routes>
@@ -84,16 +84,16 @@ function App() {
       </main>
 
       {/* Simple Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-auto">
+      <footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 mt-auto transition-colors duration-200">
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
+          <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-500 dark:text-gray-400">
             <div className="mb-4 md:mb-0">
               &copy; {new Date().getFullYear()} AssignGuard. All rights reserved.
             </div>
             <div className="flex space-x-6">
-              <a href="#" className="hover:text-primary-600 transition">Privacy Policy</a>
-              <a href="#" className="hover:text-primary-600 transition">Terms of Service</a>
-              <a href="mailto:support@assignguard.com" className="hover:text-primary-600 transition">Contact Support</a>
+              <a href="#" className="hover:text-primary-600 dark:hover:text-primary-400 transition">Privacy Policy</a>
+              <a href="#" className="hover:text-primary-600 dark:hover:text-primary-400 transition">Terms of Service</a>
+              <a href="mailto:support@assignguard.com" className="hover:text-primary-600 dark:hover:text-primary-400 transition">Contact Support</a>
             </div>
           </div>
         </div>

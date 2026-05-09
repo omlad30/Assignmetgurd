@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../utils/api';
 import { toast } from 'react-toastify';
-import { PlusCircle, FileText, Calendar, ArrowLeft, Copy } from 'lucide-react';
+import { PlusCircle, FileText, Calendar, ArrowLeft, Copy, Trash } from 'lucide-react';
 
 const ClassroomView = () => {
   const { id } = useParams();
@@ -44,6 +44,18 @@ const ClassroomView = () => {
     }
   };
 
+  const handleDelete = async (assignmentId) => {
+    if (window.confirm('Are you sure you want to delete this assignment? All submissions will be permanently lost.')) {
+      try {
+        await api.delete(`/assignments/${assignmentId}`);
+        toast.success('Assignment deleted successfully');
+        fetchClassroomAndAssignments();
+      } catch (err) {
+        toast.error(err.response?.data?.message || 'Failed to delete assignment');
+      }
+    }
+  };
+
   if (loading) return (
     <div className="flex justify-center items-center h-64">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -78,11 +90,22 @@ const ClassroomView = () => {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {assignments.map(assignment => (
           <div key={assignment._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-            <div className="p-6">
+            <div className="p-6 relative group">
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleDelete(assignment._id);
+                }} 
+                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all focus:opacity-100"
+                title="Delete Assignment"
+              >
+                <Trash className="h-4 w-4" />
+              </button>
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mb-2">
                 {assignment?.subject || 'No Subject'}
               </span>
-              <h3 className="text-lg font-bold text-gray-900 truncate mb-1">{assignment?.title || 'Untitled'}</h3>
+              <h3 className="text-lg font-bold text-gray-900 truncate pr-8 mb-1">{assignment?.title || 'Untitled'}</h3>
               <p className="text-sm text-gray-500 line-clamp-2 mb-4 h-10">{assignment?.description || 'No description'}</p>
               
               <div className="space-y-2 mb-6">

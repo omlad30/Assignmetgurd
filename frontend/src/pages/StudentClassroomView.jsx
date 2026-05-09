@@ -5,6 +5,7 @@ import StatusBadge from '../components/StatusBadge';
 import SimilarityMeter from '../components/SimilarityMeter';
 import { Calendar, Clock, FileText, Upload, ArrowLeft } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { io } from 'socket.io-client';
 
 const StudentClassroomView = () => {
   const { id } = useParams();
@@ -28,6 +29,24 @@ const StudentClassroomView = () => {
       }
     };
     fetchData();
+
+    // Setup Socket.IO for real-time assignment deletion
+    const backendUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000';
+    const socket = io(backendUrl, { withCredentials: true });
+
+    socket.on('connect', () => {
+      socket.emit('join_classroom', id);
+    });
+
+    socket.on('assignment_deleted', (deletedId) => {
+      setAssignments(prev => prev.filter(a => a._id !== deletedId));
+      toast.info('An assignment was removed by your teacher.', {
+        position: "bottom-right",
+        autoClose: 5000
+      });
+    });
+
+    return () => socket.disconnect();
   }, [id]);
 
   const getSubmissionForAssignment = (assignId) => {

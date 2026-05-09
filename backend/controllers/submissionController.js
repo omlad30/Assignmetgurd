@@ -92,11 +92,26 @@ exports.submitAssignment = async (req, res) => {
     }
 
     // 2. Upload file to Cloudinary
+    let resourceType = 'auto';
+    if (req.file.mimetype === 'application/pdf') {
+      resourceType = 'image'; // PDFs uploaded as 'image' are served inline by Cloudinary (viewable in browser)
+    } else if (req.file.mimetype.includes('word')) {
+      resourceType = 'raw'; // Word docs must be raw
+    }
+
     const b64 = Buffer.from(req.file.buffer).toString('base64');
     let dataURI = 'data:' + req.file.mimetype + ';base64,' + b64;
+    
+    // Sometimes uploading large data URIs fails for raw files, so stream is safer, but dataURI works for small files.
+    
+    // Ensure the file has an extension so the browser knows how to open it
+    const ext = req.file.originalname.split('.').pop();
+    const publicId = `${req.file.originalname.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.${ext}`;
+
     const cldRes = await cloudinary.uploader.upload(dataURI, {
-      resource_type: 'auto',
+      resource_type: resourceType,
       folder: 'assignments',
+      public_id: resourceType === 'raw' ? publicId : undefined,
     });
     const fileUrl = cldRes.secure_url;
 
@@ -162,6 +177,14 @@ exports.submitAssignment = async (req, res) => {
       subject: status === 'quarantine' ? `Action Required: Flagged Submission for ${assignment.title}` : `New Submission: ${assignment.title}`,
       message: `Student ${req.user.fullName} has submitted assignment "${assignment.title}".\nStatus: ${status}\nSimilarity: ${duplicateResult.similarityScore}%\nAI Score: ${aiResult.ai_probability}%${status === 'quarantine' ? '\n\nPlease review this submission in your dashboard.' : ''}`,
     });
+
+    // Emit real-time socket event to the teacher's dashboard
+    if (req.io) {
+      const populatedSubmission = await Submission.findById(submission._id)
+        .populate('studentId', 'fullName email')
+        .populate('matchedWithStudentId', 'fullName');
+      req.io.to(assignmentId.toString()).emit('new_submission', populatedSubmission);
+    }
 
     res.status(201).json(submission);
   } catch (error) {
