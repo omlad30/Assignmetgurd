@@ -3,6 +3,10 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const passport = require('passport');
+const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+const hpp = require('hpp');
 
 const connectDB = require('./config/db');
 require('./config/passport'); // Passport configured
@@ -49,15 +53,39 @@ if (process.env.MONGODB_URI && process.env.MONGODB_URI !== 'your_mongodb_atlas_u
 }
 
 // Middleware
-app.use(helmet());
+// 1. CORS should be first to handle preflight requests properly
 app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:5174', process.env.CLIENT_URL].filter(Boolean),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
+// 2. Helmet for security headers (disable CORP to allow cross-origin requests from frontend)
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+}));
+
+// 3. Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// 4. Rate limiting: 100 requests per 15 mins for API routes
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: 'Too many requests from this IP, please try again in 15 minutes'
+});
+app.use('/api', limiter);
+
+// Data sanitization against NoSQL query injection
+app.use(mongoSanitize());
+
+// Data sanitization against XSS
+app.use(xss());
+
+// Prevent HTTP Parameter Pollution
+app.use(hpp());
 app.use(passport.initialize());
 
 // API Routes
@@ -66,6 +94,7 @@ app.use('/api/assignments', assignmentRoutes);
 app.use('/api/submissions', submissionRoutes);
 app.use('/api/classrooms', classroomRoutes);
 app.use('/api/tutor', require('./routes/tutor'));
+app.use('/api/admin', require('./routes/admin'));
 
 // Root Endpoint
 app.get('/', (req, res) => {

@@ -10,11 +10,18 @@ const protect = async (req, res, next) => {
   ) {
     try {
       token = req.headers.authorization.split(' ')[1];
+      console.log('DEBUG: Received token in authMiddleware:', token);
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
 
-      req.user = await User.findById(decoded.id).select('-password');
+      const currentUser = await User.findById(decoded.id).select('-password');
+      if (!currentUser) {
+        throw new Error('User not found');
+      }
+      
+      req.user = currentUser;
       return next();
     } catch (error) {
+      console.error('AuthMiddleware Error:', error.message, error.stack);
       return res.status(401).json({ message: 'Not authorized, token failed' });
     }
   }

@@ -13,6 +13,7 @@ import AssignmentResult from './pages/AssignmentResult';
 import AssignmentSubmissionsView from './pages/AssignmentSubmissionsView';
 import ClassroomView from './pages/ClassroomView';
 import StudentClassroomView from './pages/StudentClassroomView';
+import AdminDashboard from './pages/AdminDashboard';
 import NotFound from './pages/NotFound';
 
 import { ToastContainer } from 'react-toastify';
@@ -24,6 +25,7 @@ function App() {
   const { user } = useContext(AuthContext);
 
   const HomeRedirect = () => {
+    if (user?.role === 'admin') return <Navigate to="/admin" />;
     if (user?.role === 'teacher') return <Navigate to="/teacher" />;
     if (user?.role === 'student') return <Navigate to="/student" />;
     return <Home />;
@@ -75,6 +77,13 @@ function App() {
           <Route path="/assignment-results/:id" element={
             <ProtectedRoute allowedRoles={['teacher']}>
               <AssignmentSubmissionsView />
+            </ProtectedRoute>
+          } />
+
+          {/* Admin Routes */}
+          <Route path="/admin" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminDashboard />
             </ProtectedRoute>
           } />
 

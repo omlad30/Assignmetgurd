@@ -13,7 +13,7 @@ const checkAiContent = async (text) => {
 
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
     const prompt = `You are an academic integrity checker.
     Analyze this assignment and return ONLY valid JSON:
@@ -55,7 +55,7 @@ const checkAiContentDraft = async (text) => {
 
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
     const prompt = `You are a helpful writing tutor and academic integrity checker.
     A student is running a "Pre-Flight Check" on their assignment draft.

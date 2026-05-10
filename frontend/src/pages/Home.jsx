@@ -8,6 +8,8 @@ import { Mail, Lock, LogIn, ShieldCheck, BrainCircuit, GraduationCap } from 'luc
 const Home = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [otpRequested, setOtpRequested] = useState(false);
+  const [otp, setOtp] = useState('');
   const { loginWithToken, user } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
@@ -39,10 +41,26 @@ const Home = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (otpRequested) {
+      try {
+        const res = await api.post('/auth/verify-otp', { email, otp });
+        await loginWithToken(res.data.token);
+        toast.success('Admin Login successful!');
+      } catch (err) {
+        toast.error(err.response?.data?.message || 'OTP verification failed');
+      }
+      return;
+    }
+
     try {
       const res = await api.post('/auth/login', { email, password });
-      await loginWithToken(res.data.token);
-      toast.success('Login successful!');
+      if (res.data.requiresOtp) {
+        setOtpRequested(true);
+        toast.info(res.data.message);
+      } else {
+        await loginWithToken(res.data.token);
+        toast.success('Login successful!');
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Login failed');
     }
@@ -127,46 +145,88 @@ const Home = () => {
               </p>
             </div>
             <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
-              <div className="space-y-4">
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-                    <Mail className="h-5 w-5 text-gray-400 group-focus-within:text-primary-500 transition-colors" />
+              {!otpRequested ? (
+                <>
+                  <div className="space-y-4">
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                        <Mail className="h-5 w-5 text-gray-400 group-focus-within:text-primary-500 transition-colors" />
+                      </div>
+                      <input
+                        type="email"
+                        required
+                        className="premium-input pl-11"
+                        placeholder="Email address"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                        <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-primary-500 transition-colors" />
+                      </div>
+                      <input
+                        type="password"
+                        required
+                        className="premium-input pl-11"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <input
-                    type="email"
-                    required
-                    className="premium-input"
-                    placeholder="Email address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-                    <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-primary-500 transition-colors" />
-                  </div>
-                  <input
-                    type="password"
-                    required
-                    className="premium-input"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-              </div>
 
-              <div>
-                <button
-                  type="submit"
-                  className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-2xl text-white bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-xl shadow-primary-500/20 transition-all duration-300 transform hover:-translate-y-0.5"
-                >
-                  <span className="absolute left-0 inset-y-0 flex items-center pl-4">
-                    <LogIn className="h-5 w-5 text-white/70 group-hover:text-white transition-colors" />
-                  </span>
-                  Sign in securely
-                </button>
-              </div>
+                  <div>
+                    <button
+                      type="submit"
+                      className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-2xl text-white bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-xl shadow-primary-500/20 transition-all duration-300 transform hover:-translate-y-0.5"
+                    >
+                      <span className="absolute left-0 inset-y-0 flex items-center pl-4">
+                        <LogIn className="h-5 w-5 text-white/70 group-hover:text-white transition-colors" />
+                      </span>
+                      Sign in securely
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-4">
+                    <div className="p-3 bg-primary-50 rounded-xl border border-primary-100 text-sm text-primary-800 font-medium">
+                      An OTP has been sent to your email to verify your Admin access.
+                    </div>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                        <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-primary-500 transition-colors" />
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        className="premium-input pl-11 text-center tracking-[0.5em] font-bold text-lg"
+                        placeholder="000000"
+                        maxLength="6"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <button
+                      type="submit"
+                      className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-2xl text-white bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-xl shadow-primary-500/20 transition-all duration-300 transform hover:-translate-y-0.5"
+                    >
+                      Verify OTP
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setOtpRequested(false)}
+                      className="mt-4 w-full text-sm text-gray-500 hover:text-primary-600 transition-colors"
+                    >
+                      Back to login
+                    </button>
+                  </div>
+                </>
+              )}
             </form>
 
             <div className="mt-6">

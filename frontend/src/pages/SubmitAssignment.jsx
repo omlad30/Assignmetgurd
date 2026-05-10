@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { toast } from 'react-toastify';
-import { UploadCloud, File, AlertCircle } from 'lucide-react';
+import { File, AlertCircle, FilePlus, FolderPlus, LayoutGrid, List, AlignLeft, Folder, ArrowDownCircle } from 'lucide-react';
 import SocraticTutor from '../components/SocraticTutor';
 
 const SubmitAssignment = () => {
@@ -14,6 +14,7 @@ const SubmitAssignment = () => {
   const [draftLoading, setDraftLoading] = useState(false);
   const [draftResult, setDraftResult] = useState(null);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   useEffect(() => {
     const fetchAssignment = async () => {
@@ -30,8 +31,7 @@ const SubmitAssignment = () => {
     fetchAssignment();
   }, [id, navigate]);
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
+  const validateAndSetFile = (selectedFile) => {
     if (selectedFile) {
       if (
         selectedFile.type === 'application/pdf' ||
@@ -42,8 +42,30 @@ const SubmitAssignment = () => {
         setFile(selectedFile);
       } else {
         toast.error('Only PDF, DOCX, and Image files are supported');
-        e.target.value = null; // reset
       }
+    }
+  };
+
+  const handleFileChange = (e) => {
+    validateAndSetFile(e.target.files[0]);
+    e.target.value = null; // reset
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      validateAndSetFile(e.dataTransfer.files[0]);
     }
   };
 
@@ -151,31 +173,67 @@ const SubmitAssignment = () => {
           <form onSubmit={handleSubmit}>
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload PDF, DOCX, or Image file
-                </label>
-                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-primary-500 transition-colors bg-gray-50">
-                  <div className="space-y-2 text-center">
-                    {file ? (
-                      <div className="flex flex-col items-center">
-                        <File className="mx-auto h-12 w-12 text-primary-500" />
-                        <span className="mt-2 text-sm text-gray-900 font-medium">{file.name}</span>
-                        <span className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
-                        <button type="button" onClick={() => setFile(null)} className="mt-2 text-sm text-red-600 hover:text-red-500">Remove</button>
-                      </div>
-                    ) : (
-                      <>
-                        <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
-                        <div className="flex text-sm text-gray-600 justify-center">
-                          <label className="relative cursor-pointer bg-white rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500 p-1">
-                            <span>Upload a file</span>
-                            <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept=".pdf,.doc,.docx,image/*" />
-                          </label>
-                          <p className="pl-1 pt-1">or drag and drop</p>
+                <div className="flex justify-end text-sm text-gray-700 mb-1 font-medium">
+                  Maximum file size: 10 MB, maximum number of files: 1
+                </div>
+                
+                <div className="border border-gray-300 rounded-lg overflow-hidden bg-white shadow-sm">
+                  {/* Toolbar */}
+                  <div className="bg-gray-100 border-b border-gray-300 p-2 flex justify-between items-center">
+                    {/* Left Toolbar Icons */}
+                    <div className="flex space-x-2">
+                      <button type="button" className="p-1.5 bg-gray-200 hover:bg-gray-300 rounded text-gray-700 transition" title="Add file">
+                        <FilePlus className="w-5 h-5" />
+                      </button>
+                      <button type="button" className="p-1.5 bg-gray-200 hover:bg-gray-300 rounded text-gray-700 transition" title="Create folder">
+                        <FolderPlus className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    {/* Right Toolbar Icons */}
+                    <div className="flex bg-gray-200 rounded">
+                      <button type="button" className="p-1.5 hover:bg-gray-300 rounded-l text-gray-700 transition" title="Display folder with file icons">
+                        <LayoutGrid className="w-5 h-5" />
+                      </button>
+                      <button type="button" className="p-1.5 bg-gray-300 text-gray-800 transition" title="Display folder with file details">
+                        <List className="w-5 h-5" />
+                      </button>
+                      <button type="button" className="p-1.5 hover:bg-gray-300 rounded-r text-gray-700 transition" title="Display folder as file tree">
+                        <AlignLeft className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Files path */}
+                  <div className="p-2 border-b border-gray-200 flex items-center text-blue-600 text-sm font-medium">
+                    <Folder className="w-5 h-5 mr-2 text-gray-800 fill-gray-800" />
+                    <span className="hover:underline cursor-pointer">Files</span>
+                  </div>
+
+                  {/* Dropzone Area */}
+                  <div className="p-4 bg-white">
+                    <label 
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      className={`relative cursor-pointer flex flex-col items-center justify-center p-12 border-2 border-dashed ${isDragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-white'} transition-colors duration-200 min-h-[200px]`}
+                    >
+                      <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept=".pdf,.doc,.docx,image/*" />
+                      
+                      {file ? (
+                        <div className="flex flex-col items-center z-10">
+                           <File className="mx-auto h-16 w-16 text-blue-500 mb-2" />
+                           <span className="mt-2 text-base text-gray-900 font-medium">{file.name}</span>
+                           <span className="text-sm text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                           <button type="button" onClick={(e) => { e.preventDefault(); setFile(null); }} className="mt-3 text-sm font-semibold text-red-600 hover:text-red-500 z-20 relative">Remove File</button>
                         </div>
-                        <p className="text-xs text-gray-500">PDF, DOCX, Images up to 10MB</p>
-                      </>
-                    )}
+                      ) : (
+                        <div className="flex flex-col items-center pointer-events-none">
+                          <ArrowDownCircle className="w-16 h-16 text-gray-400 mb-4" strokeWidth={1.5} />
+                          <p className="text-gray-700 text-lg">You can drag and drop files here to add them.</p>
+                        </div>
+                      )}
+                    </label>
                   </div>
                 </div>
               </div>

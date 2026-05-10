@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initAuth = async () => {
       const token = localStorage.getItem('token');
-      if (token) {
+      if (token && token !== 'undefined' && token !== 'null') {
         try {
           const decoded = jwtDecode(token);
           // Check expiration
@@ -26,6 +26,8 @@ export const AuthProvider = ({ children }) => {
           console.error("Auth init failed:", error);
           logout();
         }
+      } else if (token === 'undefined' || token === 'null') {
+        localStorage.removeItem('token');
       }
       setLoading(false);
     };
@@ -33,6 +35,9 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const loginWithToken = async (token) => {
+    if (!token || token === 'undefined' || token === 'null') {
+      throw new Error('Invalid token received from server');
+    }
     localStorage.setItem('token', token);
     const res = await api.get('/auth/me');
     setUser(res.data);

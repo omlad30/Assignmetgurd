@@ -92,12 +92,8 @@ exports.submitAssignment = async (req, res) => {
     }
 
     // 2. Upload file to Cloudinary
+    // We use 'auto' to correctly detect raw docs, pdfs, and images.
     let resourceType = 'auto';
-    if (req.file.mimetype === 'application/pdf') {
-      resourceType = 'image'; // PDFs uploaded as 'image' are served inline by Cloudinary (viewable in browser)
-    } else if (req.file.mimetype.includes('word')) {
-      resourceType = 'raw'; // Word docs must be raw
-    }
 
     const b64 = Buffer.from(req.file.buffer).toString('base64');
     let dataURI = 'data:' + req.file.mimetype + ';base64,' + b64;
@@ -111,7 +107,7 @@ exports.submitAssignment = async (req, res) => {
     const cldRes = await cloudinary.uploader.upload(dataURI, {
       resource_type: resourceType,
       folder: 'assignments',
-      public_id: resourceType === 'raw' ? publicId : undefined,
+      public_id: publicId, // ALWAYS pass publicId so it keeps the .pdf or .docx extension!
     });
     const fileUrl = cldRes.secure_url;
 
