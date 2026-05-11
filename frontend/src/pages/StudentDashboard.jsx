@@ -1,14 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
+import { AuthContext } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import { Users, Plus, ArrowRight } from 'lucide-react';
 
 const StudentDashboard = () => {
+  const { user, refreshUser } = useContext(AuthContext);
   const [classrooms, setClassrooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
+  const [rollNo, setRollNo] = useState('');
+  const [division, setDivision] = useState('');
   const [joining, setJoining] = useState(false);
 
   const fetchClassrooms = async () => {
@@ -32,10 +36,17 @@ const StudentDashboard = () => {
     
     setJoining(true);
     try {
-      await api.post('/classrooms/join', { inviteCode: inviteCode.trim() });
+      await api.post('/classrooms/join', { 
+        inviteCode: inviteCode.trim(),
+        rollNo: rollNo.trim(),
+        division: division.trim()
+      });
       toast.success('Successfully joined the classroom!');
       setShowJoinModal(false);
       setInviteCode('');
+      setRollNo('');
+      setDivision('');
+      await refreshUser();
       fetchClassrooms();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to join classroom');
@@ -58,7 +69,19 @@ const StudentDashboard = () => {
           <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">
             My Enrolled Classes
           </h2>
-          <p className="mt-2 text-sm text-gray-500 font-medium">Join a class using an invite code to see your assignments.</p>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
+            <p className="text-sm text-gray-500 font-medium whitespace-nowrap">Join a class using an invite code.</p>
+            {user?.rollNo && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 border border-indigo-200 shadow-sm">
+                Roll No: {user.rollNo}
+              </span>
+            )}
+            {user?.division && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200 shadow-sm">
+                Div: {user.division}
+              </span>
+            )}
+          </div>
         </div>
         <div className="mt-6 flex md:mt-0 md:ml-4 relative z-10">
           <button
@@ -130,12 +153,36 @@ const StudentDashboard = () => {
                   <input
                     required
                     type="text"
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 font-mono text-lg tracking-widest text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 font-mono text-lg tracking-widest text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase text-black"
                     placeholder="e.g. A7B9X2"
                     value={inviteCode}
                     onChange={e => setInviteCode(e.target.value.toUpperCase())}
                     maxLength={6}
                   />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Roll No</label>
+                    <input
+                      required
+                      type="text"
+                      className="w-full border border-gray-300 rounded-xl px-4 py-3 text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="e.g. 101"
+                      value={rollNo}
+                      onChange={e => setRollNo(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Division</label>
+                    <input
+                      required
+                      type="text"
+                      className="w-full border border-gray-300 rounded-xl px-4 py-3 text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="e.g. A"
+                      value={division}
+                      onChange={e => setDivision(e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
               <div className="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end gap-3">

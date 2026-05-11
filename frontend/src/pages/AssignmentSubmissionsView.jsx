@@ -81,6 +81,25 @@ const AssignmentSubmissionsView = () => {
     }
   };
 
+  const handleExport = async () => {
+    try {
+      const response = await api.get(`/assignments/${id}/export`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${assignment?.title || 'assignment'}_grades.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      toast.success('Export successful');
+    } catch (err) {
+      toast.error('Failed to export grades');
+    }
+  };
+
+
   const filtered = submissions.filter(s =>
     s.studentId?.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.studentId?.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -108,17 +127,27 @@ const AssignmentSubmissionsView = () => {
         </div>
 
         {activeTab === 'submissions' && (
-          <div className="relative group">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-primary-400 group-focus-within:text-primary-600 transition-colors" />
+          <div className="flex items-center gap-3">
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-primary-400 group-focus-within:text-primary-600 transition-colors" />
+              </div>
+              <input
+                type="text"
+                className="premium-input pl-10 pr-4 py-3 min-w-[300px]"
+                placeholder="Search students..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
-            <input
-              type="text"
-              className="premium-input pl-10 pr-4 py-3 min-w-[300px]"
-              placeholder="Search students..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 px-4 py-3 rounded-2xl border border-white/50 shadow-sm transition-all hover:shadow hover:-translate-y-0.5 backdrop-blur-md"
+              title="Export Grades as CSV"
+            >
+              <Download className="h-5 w-5 text-primary-600" />
+              <span className="font-medium">Export</span>
+            </button>
           </div>
         )}
       </div>

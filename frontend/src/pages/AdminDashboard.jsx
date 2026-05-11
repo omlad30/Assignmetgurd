@@ -118,7 +118,11 @@ const AdminDashboard = () => {
                     <td className="whitespace-nowrap py-4 pl-6 pr-3 font-semibold text-gray-900">{room.name}</td>
                     <td className="whitespace-nowrap px-3 py-4 text-gray-500">{room.subject}</td>
                     <td className="whitespace-nowrap px-3 py-4 text-gray-900 font-medium">
-                      {room.teacherId?.fullName} <span className="text-xs text-gray-400 block">{room.teacherId?.email}</span>
+                      {room.teacherId?.fullName} 
+                      <span className="text-xs text-gray-400 block">{room.teacherId?.email}</span>
+                      {room.teacherId?.subject && (
+                        <span className="text-xs text-primary-600 block mt-0.5">Subject: {room.teacherId.subject}</span>
+                      )}
                     </td>
                     <td className="whitespace-nowrap px-3 py-4">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">

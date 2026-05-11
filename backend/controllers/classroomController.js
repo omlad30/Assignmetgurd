@@ -1,5 +1,6 @@
 const Classroom = require('../models/Classroom');
 const Assignment = require('../models/Assignment');
+const User = require('../models/User');
 
 exports.createClassroom = async (req, res) => {
   try {
@@ -18,7 +19,7 @@ exports.createClassroom = async (req, res) => {
 
 exports.joinClassroom = async (req, res) => {
   try {
-    const { inviteCode } = req.body;
+    const { inviteCode, rollNo, division } = req.body;
     const classroom = await Classroom.findOne({ inviteCode });
     if (!classroom) {
       return res.status(404).json({ message: 'Invalid invite code.' });
@@ -26,6 +27,15 @@ exports.joinClassroom = async (req, res) => {
     if (classroom.students.includes(req.user._id)) {
       return res.status(400).json({ message: 'You are already in this classroom.' });
     }
+
+    // Update student details if provided
+    if (rollNo || division) {
+      const user = await User.findById(req.user._id);
+      if (rollNo) user.rollNo = rollNo;
+      if (division) user.division = division;
+      await user.save();
+    }
+
     classroom.students.push(req.user._id);
     await classroom.save();
     res.json(classroom);

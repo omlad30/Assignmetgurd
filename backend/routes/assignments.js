@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createAssignment, getTeacherAssignments, getAllAssignments, getAssignmentById, getClassroomAssignments, getAssignmentAnalytics, deleteAssignment } = require('../controllers/assignmentController');
+const { createAssignment, getTeacherAssignments, getAllAssignments, getAssignmentById, getClassroomAssignments, getAssignmentAnalytics, deleteAssignment, exportAssignmentGrades } = require('../controllers/assignmentController');
 const { protect, teacherOnly } = require('../middleware/authMiddleware');
 
 router.route('/')
@@ -15,4 +15,6 @@ router.route('/:id')
   .delete(protect, teacherOnly, deleteAssignment);
   
 router.route('/:id/analytics').get(protect, teacherOnly, getAssignmentAnalytics);
+router.route('/:id/export').get(protect, teacherOnly, exportAssignmentGrades);
+
 module.exports = router;

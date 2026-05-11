@@ -19,8 +19,6 @@ exports.askTutor = async (req, res) => {
       }
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
     const systemInstruction = `You are a Socratic AI Tutor for students. 
 Your goal is to help students learn by asking guiding questions, NOT by giving them the direct answers.
 CRITICAL RULE: You must ONLY answer questions related to their studies, their specific assignment, or general academic problem-solving.
@@ -29,18 +27,42 @@ When a student asks a valid question, acknowledge it, give a tiny hint if necess
 Be concise, encouraging, and supportive. Do not write long paragraphs. Keep it conversational.
 ${assignmentContext}`;
 
-    // Format chat history for Gemini
-    const formattedHistory = (chatHistory || []).map(msg => ({
-      role: msg.role === 'tutor' ? 'model' : 'user',
-      parts: [{ text: msg.text }]
-    }));
-
-    const chat = model.startChat({
-      history: formattedHistory,
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
       systemInstruction: systemInstruction
     });
 
-    const result = await chat.sendMessage(question);
+    // Format chat history for Gemini and ensure strict alternating user/model roles
+    let formattedHistory = [];
+    let expectedRole = 'user';
+    
+    for (const msg of (chatHistory || [])) {
+      const currentRole = msg.role === 'tutor' ? 'model' : 'user';
+      if (currentRole === expectedRole) {
+        formattedHistory.push({ role: currentRole, parts: [{ text: msg.text }] });
+        expectedRole = expectedRole === 'user' ? 'model' : 'user';
+      } else if (formattedHistory.length > 0) {
+        // Append to the last message if the role is repeated
+        formattedHistory[formattedHistory.length - 1].parts[0].text += '\n\n' + msg.text;
+      }
+    }
+
+    // Gemini history MUST start with 'user'. If it starts with 'model', remove it.
+    if (formattedHistory.length > 0 && formattedHistory[0].role === 'model') {
+      formattedHistory.shift();
+    }
+    // If the last message in history is user, but we are about to send a new question (which is also user), 
+    // it will break the sequence. The question is passed separately to sendMessage. 
+    // So history must end with 'model'.
+    if (formattedHistory.length > 0 && formattedHistory[formattedHistory.length - 1].role === 'user') {
+      formattedHistory.pop();
+    }
+
+    const chat = model.startChat({
+      history: formattedHistory
+    });
+
+    const result = await chat.sendMessage([{ text: question }]);
     const response = await result.response;
     const text = response.text();
 

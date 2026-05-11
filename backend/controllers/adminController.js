@@ -11,7 +11,7 @@ exports.getAdminStats = async (req, res) => {
 
     // Fetch all classrooms with teacher details
     const classrooms = await Classroom.find()
-      .populate('teacherId', 'fullName email')
+      .populate('teacherId', 'fullName email subject')
       .populate('students', 'fullName')
       .sort({ createdAt: -1 });
 

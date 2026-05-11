@@ -30,18 +30,18 @@ const extractWithTesseract = async (fileBuffer) => {
 
 const sanitizeText = (text) => {
   if (!text) return text;
-  
+
   // 1. Remove zero-width characters (Token Breaking bypass)
   let sanitized = text.replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E]/g, '');
-  
+
   // 2. Map common Cyrillic homoglyphs back to standard Latin (The Cyrillic Trick bypass)
   const homoglyphs = {
     '\u0430': 'a', '\u0441': 'c', '\u0435': 'e', '\u043E': 'o', '\u0440': 'p', '\u0445': 'x', '\u0443': 'y',
     '\u0410': 'A', '\u0421': 'C', '\u0415': 'E', '\u041E': 'O', '\u0420': 'P', '\u0425': 'X', '\u0423': 'Y'
   };
-  
+
   sanitized = sanitized.replace(/[\u0430\u0441\u0435\u043E\u0440\u0445\u0443\u0410\u0421\u0415\u041E\u0420\u0425\u0423]/g, match => homoglyphs[match] || match);
-  
+
   return sanitized.trim();
 };
 
@@ -62,7 +62,7 @@ const extractTextRaw = async (fileBuffer, mimetype) => {
       }
       return text;
     } else if (
-      mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
+      mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
       mimetype === 'application/msword'
     ) {
       const result = await mammoth.extractRawText({ buffer: fileBuffer });

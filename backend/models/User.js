@@ -37,6 +37,12 @@ const userSchema = new mongoose.Schema({
   subject: {
     type: String,
   },
+  rollNo: {
+    type: String,
+  },
+  division: {
+    type: String,
+  },
   authMethod: {
     type: String,
     enum: ['email', 'google'],

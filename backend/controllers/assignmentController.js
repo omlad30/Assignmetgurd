@@ -69,14 +69,14 @@ exports.deleteAssignment = async (req, res) => {
     if (!assignment) {
       return res.status(404).json({ message: 'Assignment not found' });
     }
-    
+
     // Ensure only the teacher who created it can delete it (allow legacy assignments with no teacherId to be deleted)
     if (assignment.teacherId && assignment.teacherId.toString() !== req.user._id.toString()) {
       return res.status(401).json({ message: 'Not authorized to delete this assignment' });
     }
 
     await Assignment.findByIdAndDelete(req.params.id);
-    
+
     // Optionally delete related submissions (omitted for brevity, or add if needed)
     const Submission = require('../models/Submission');
     await Submission.deleteMany({ assignmentId: req.params.id });
@@ -95,7 +95,7 @@ exports.deleteAssignment = async (req, res) => {
 exports.getAssignmentAnalytics = async (req, res) => {
   try {
     const Submission = require('../models/Submission');
-    
+
     const submissions = await Submission.find({ assignmentId: req.params.id })
       .populate('studentId', 'fullName')
       .populate('matchedWithStudentId', 'fullName');
@@ -112,7 +112,7 @@ exports.getAssignmentAnalytics = async (req, res) => {
           nodes.push({ id: sub.studentId._id.toString(), name: sub.studentId.fullName, val: 1 });
           nodeIds.add(sub.studentId._id.toString());
         }
-        
+
         if (sub.matchedWithStudentId && sub.similarityScore > 0) {
           if (!nodeIds.has(sub.matchedWithStudentId._id.toString())) {
             nodes.push({ id: sub.matchedWithStudentId._id.toString(), name: sub.matchedWithStudentId.fullName, val: 1 });
@@ -140,6 +140,59 @@ exports.getAssignmentAnalytics = async (req, res) => {
       totalSubmissions: submissions.length,
       struggleMetrics: allSuspiciousSentences.slice(0, 10)
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.exportAssignmentGrades = async (req, res) => {
+  try {
+    const Assignment = require('../models/Assignment');
+    const Submission = require('../models/Submission');
+
+    const assignment = await Assignment.findById(req.params.id);
+    if (!assignment) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+
+    if (assignment.teacherId && assignment.teacherId.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ message: 'Not authorized to export this assignment' });
+    }
+
+    const submissions = await Submission.find({ assignmentId: req.params.id })
+      .populate('studentId', 'fullName email rollNo division');
+
+    // Generate CSV string
+    const headers = [
+      'Name',
+      'Roll No',
+      'Div',
+      'Email',
+      'Grade',
+      'Similarity Score',
+      'AI Score',
+      'Status'
+    ];
+
+    const rows = submissions.map(sub => {
+      return [
+        sub.studentId?.fullName || 'Unknown Student',
+        sub.studentId?.rollNo || 'N/A',
+        sub.studentId?.division || 'N/A',
+        sub.studentId?.email || 'N/A',
+        sub.grade || 'Not Graded',
+        `${sub.similarityScore || 0}%`,
+        `${sub.aiScore || 0}%`,
+        sub.status || 'pending'
+      ].map(val => `"${String(val).replace(/"/g, '""')}"`).join(','); // Escape quotes for CSV
+    });
+
+    const csvContent = [headers.join(','), ...rows].join('\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=assignment_${req.params.id}_grades.csv`);
+
+    res.status(200).send(csvContent);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

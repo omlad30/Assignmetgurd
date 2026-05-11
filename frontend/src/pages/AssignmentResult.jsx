@@ -58,6 +58,12 @@ const AssignmentResult = () => {
 
         <div className="p-6 sm:p-8 space-y-8">
           {/* Top Level Summary Cards */}
+          {submission.grade && (
+            <div className="bg-emerald-50 p-6 rounded-xl border border-emerald-200 mb-6">
+              <h3 className="text-sm font-medium text-emerald-800 uppercase tracking-wider mb-2">Final Grade</h3>
+              <p className="text-3xl font-extrabold text-emerald-600">{submission.grade}</p>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
               <h3 className="text-sm font-medium text-gray-500 mb-4 uppercase tracking-wider">Similarity Analysis</h3>

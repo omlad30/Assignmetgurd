@@ -77,7 +77,7 @@ const Home = () => {
       <div className="absolute top-0 right-10 w-96 h-96 bg-yellow-300 rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob animation-delay-2000"></div>
       <div className="absolute -bottom-8 left-1/2 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob animation-delay-4000"></div>
 
-      <div className="max-w-6xl w-full flex flex-col lg:flex-row items-center gap-12 relative z-10">
+      <div className="max-w-6xl w-full flex flex-col-reverse lg:flex-row items-center gap-12 relative z-10">
 
         {/* Left Side - Information */}
         <div className="flex-1 w-full text-gray-900 px-2 sm:px-4 mt-8 lg:mt-0 text-center lg:text-left">
