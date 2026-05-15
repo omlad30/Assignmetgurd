@@ -123,7 +123,7 @@ const AssignmentSubmissionsView = () => {
           <Link to="/teacher" className="p-3 mr-4 text-gray-500 hover:text-primary-600 transition-all bg-white/60 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm hover:shadow-md hover:-translate-y-0.5">
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 tracking-tight">Assignment Overview</h2>
+          <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 tracking-tight">{assignment?.title || 'Assignment Overview'}</h2>
         </div>
 
         {activeTab === 'submissions' && (
@@ -148,6 +148,20 @@ const AssignmentSubmissionsView = () => {
               <Download className="h-5 w-5 text-primary-600" />
               <span className="font-medium">Export</span>
             </button>
+          </div>
+        )}
+      </div>
+
+      <div className="relative mb-6 z-10">
+        {assignment?.description && (
+          <div className="bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-sm border border-white/50">
+            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Assignment Prompt / Details</h3>
+            <p className="text-gray-800 whitespace-pre-wrap">{assignment.description}</p>
+            {assignment?.deadline && (
+              <p className="mt-4 text-sm font-medium text-gray-500">
+                <span className="font-bold">Deadline:</span> {new Date(assignment.deadline).toLocaleString('en-IN')}
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -265,8 +279,8 @@ const AssignmentSubmissionsView = () => {
                         )}
                         <a
                           href={
-                            submission.fileUrl.includes('raw/upload') && !submission.fileUrl.endsWith('.pdf') 
-                            ? `https://docs.google.com/viewer?url=${encodeURIComponent(submission.fileUrl)}` 
+                            submission.fileUrl.match(/\.(docx|doc)$/i)
+                            ? `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(submission.fileUrl)}`
                             : submission.fileUrl
                           }
                           target="_blank"

@@ -28,6 +28,11 @@ const Navbar = () => {
             </Link>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="hidden md:flex items-center space-x-4 mr-4 border-r border-gray-200 dark:border-gray-700 pr-4">
+              <Link to="/about" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium text-sm transition-colors">
+                About Us
+              </Link>
+            </div>
             <button
               onClick={toggleTheme}
               className="p-2 rounded-full text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none"

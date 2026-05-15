@@ -70,10 +70,10 @@ app.use(helmet({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 4. Rate limiting: 100 requests per 15 mins for API routes
+// 4. Rate limiting: 100 requests per 15 mins for API routes (higher in dev)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: process.env.NODE_ENV === 'production' ? 100 : 5000,
   message: 'Too many requests from this IP, please try again in 15 minutes'
 });
 app.use('/api', limiter);
@@ -93,7 +93,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/submissions', submissionRoutes);
 app.use('/api/classrooms', classroomRoutes);
-app.use('/api/tutor', require('./routes/tutor'));
 app.use('/api/admin', require('./routes/admin'));
 
 // Root Endpoint
@@ -104,7 +103,9 @@ app.get('/', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ message: err.message || 'Server Error' });
+  res.status(500).json({ 
+    message: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message || 'Server Error' 
+  });
 });
 
 const PORT = process.env.PORT || 5000;

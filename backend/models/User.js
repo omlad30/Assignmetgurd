@@ -25,6 +25,12 @@ const userSchema = new mongoose.Schema({
   otpExpiry: {
     type: Date,
   },
+  resetPasswordOtp: {
+    type: String,
+  },
+  resetPasswordOtpExpiry: {
+    type: Date,
+  },
   googleId: {
     type: String,
   },

@@ -6,6 +6,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import About from './pages/About';
 import StudentDashboard from './pages/StudentDashboard';
 import TeacherDashboard from './pages/TeacherDashboard';
 import SubmitAssignment from './pages/SubmitAssignment';
@@ -39,6 +41,8 @@ function App() {
           <Route path="/" element={<HomeRedirect />} />
           <Route path="/login" element={<Home />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/about" element={<About />} />
           <Route path="/auth/success" element={<Home />} /> {/* Handles Google Redirect */}
 
           {/* Student Routes */}

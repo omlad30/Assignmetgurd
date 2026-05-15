@@ -92,24 +92,33 @@ exports.submitAssignment = async (req, res) => {
     }
 
     // 2. Upload file to Cloudinary
-    // We use 'auto' to correctly detect raw docs, pdfs, and images.
     let resourceType = 'auto';
-
-    const b64 = Buffer.from(req.file.buffer).toString('base64');
-    let dataURI = 'data:' + req.file.mimetype + ';base64,' + b64;
+    const ext = req.file.originalname.split('.').pop().toLowerCase();
     
-    // Sometimes uploading large data URIs fails for raw files, so stream is safer, but dataURI works for small files.
-    
-    // Ensure the file has an extension so the browser knows how to open it
-    const ext = req.file.originalname.split('.').pop();
-    const publicId = `${req.file.originalname.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.${ext}`;
+    // Only append extension to publicId for raw files (like docx) 
+    // because Cloudinary auto-appends extensions for images/pdfs.
+    const isRaw = ext !== 'pdf' && ext !== 'png' && ext !== 'jpg' && ext !== 'jpeg';
+    const baseName = req.file.originalname.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_');
+    const publicId = `${baseName}_${Date.now()}${isRaw ? '.' + ext : ''}`;
 
-    const cldRes = await cloudinary.uploader.upload(dataURI, {
-      resource_type: resourceType,
-      folder: 'assignments',
-      public_id: publicId, // ALWAYS pass publicId so it keeps the .pdf or .docx extension!
+    const fileUrl = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          resource_type: resourceType,
+          folder: 'assignments',
+          public_id: publicId,
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result.secure_url);
+        }
+      );
+      const { Readable } = require('stream');
+      const bufferStream = new Readable();
+      bufferStream.push(req.file.buffer);
+      bufferStream.push(null);
+      bufferStream.pipe(stream);
     });
-    const fileUrl = cldRes.secure_url;
 
     // 3. Duplicate check
     const previousSubmissions = await Submission.find({ assignmentId });

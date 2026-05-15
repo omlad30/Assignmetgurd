@@ -4,7 +4,10 @@ const bcrypt = require('bcryptjs');
 const sendEmail = require('../utils/sendEmail');
 
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'fallback_secret', {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('FATAL ERROR: JWT_SECRET is not defined in environment variables.');
+  }
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: '7d',
   });
 };
@@ -15,7 +18,10 @@ exports.registerUser = async (req, res) => {
 
     // Security check: Only allow teacher registration if the correct secret code is provided
     if (role === 'teacher') {
-      const expectedCode = process.env.TEACHER_SECRET_CODE || 'admin123';
+      const expectedCode = process.env.TEACHER_SECRET_CODE;
+      if (!expectedCode) {
+        return res.status(500).json({ message: 'Server configuration error: TEACHER_SECRET_CODE not set' });
+      }
       if (secretCode !== expectedCode) {
         return res.status(403).json({ message: 'Invalid Teacher Access Code' });
       }
@@ -59,15 +65,18 @@ exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Hardcoded logic for main admin initialization
-    if (email === 'ladom3003@gmail.com') {
+    // Dynamic Admin Initialization from Environment Variables
+    if (email === process.env.ADMIN_EMAIL && process.env.ADMIN_EMAIL) {
       let adminUser = await User.findOne({ email });
       if (!adminUser) {
+        if (!process.env.ADMIN_PASSWORD) {
+          return res.status(500).json({ message: 'Server configuration error: ADMIN_PASSWORD not set' });
+        }
         const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash('om3003', salt);
+        const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD, salt);
         await User.create({
           fullName: 'Main Authority',
-          email: 'ladom3003@gmail.com',
+          email: process.env.ADMIN_EMAIL,
           password: hashedPassword,
           role: 'admin'
         });
@@ -172,4 +181,73 @@ exports.googleOAuthSuccess = async (req, res) => {
   // since the flow started from a browser navigation
   const frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
   res.redirect(`${frontendUrl}/auth/success?token=${token}`);
+};
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found with this email' });
+    }
+
+    if (user.authMethod === 'google') {
+      return res.status(400).json({ message: 'This account uses Google Sign-In. Please reset your password through Google.' });
+    }
+
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const salt = await bcrypt.genSalt(10);
+    user.resetPasswordOtp = await bcrypt.hash(otp, salt);
+    user.resetPasswordOtpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    await user.save();
+
+    console.log(`\n\n=== PASSWORD RESET OTP ===\nEmail: ${user.email}\nOTP: ${otp}\n==========================\n\n`);
+
+    await sendEmail({
+      email: user.email,
+      subject: 'Password Reset OTP - AssignGuard',
+      message: `Your OTP for password reset is: ${otp}\n\nThis code will expire in 10 minutes. If you did not request this, please ignore this email.`
+    });
+
+    res.json({ message: 'Password reset OTP sent to your email.' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.resetPasswordOtp || !user.resetPasswordOtpExpiry || user.resetPasswordOtpExpiry < Date.now()) {
+      return res.status(400).json({ message: 'OTP expired or invalid' });
+    }
+
+    const isMatch = await bcrypt.compare(otp, user.resetPasswordOtp);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid OTP' });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    
+    // Clear OTP fields
+    user.resetPasswordOtp = undefined;
+    user.resetPasswordOtpExpiry = undefined;
+    
+    await user.save();
+
+    res.json({ message: 'Password successfully reset. You can now log in.' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
