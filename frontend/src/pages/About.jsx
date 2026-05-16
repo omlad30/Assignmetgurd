@@ -62,23 +62,37 @@ const About = () => {
             <Code className="h-64 w-64 text-white transform rotate-12 translate-x-16 -translate-y-16" />
           </div>
           
-          <div className="relative z-10 flex flex-col sm:flex-row items-center sm:items-start justify-between">
-            <div className="mb-8 sm:mb-0">
-              <h2 className="text-3xl font-bold text-white mb-2 flex items-center justify-center sm:justify-start">
-                <Users className="h-8 w-8 text-primary-400 mr-3" />
-                Team <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-purple-400 ml-2">CodeCrafter</span>
-              </h2>
-              <p className="text-gray-300 text-lg max-w-lg mt-4 text-center sm:text-left">
-                We are passionate developers dedicated to crafting elegant code and solving real-world problems. AssignGuard represents our commitment to building software that is not only functional but visually stunning, highly secure, and impactful.
-              </p>
-            </div>
-            
-            <div className="flex-shrink-0 bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 flex flex-col items-center">
-              <div className="h-20 w-20 bg-gradient-to-tr from-primary-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg mb-4">
-                <Code className="h-10 w-10 text-white" />
-              </div>
-              <span className="text-white font-bold tracking-widest uppercase text-sm">Innovating</span>
-              <span className="text-primary-300 font-medium text-xs">Education</span>
+          <div className="relative z-10">
+            <h2 className="text-3xl font-bold text-white mb-2 flex items-center justify-center sm:justify-start">
+              <Users className="h-8 w-8 text-primary-400 mr-3" />
+              Team <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-purple-400 ml-2">CodeCrafter</span>
+            </h2>
+            <p className="text-gray-300 text-lg mt-4 mb-10 text-center sm:text-left max-w-2xl">
+              We are passionate developers dedicated to crafting elegant code and solving real-world problems. AssignGuard represents our commitment to building software that is not only functional but visually stunning, highly secure, and impactful.
+            </p>
+
+            {/* Member Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {[
+                { name: 'Om Lad', role: 'Full Stack Developer', initials: 'OL', from: 'from-primary-500', to: 'to-blue-500' },
+                { name: 'Devendra Nimbalkar', role: 'Backend Engineer', initials: 'DN', from: 'from-purple-500', to: 'to-pink-500' },
+                { name: 'Manish Patil', role: 'Frontend Developer', initials: 'MP', from: 'from-green-500', to: 'to-teal-500' },
+              ].map((member) => (
+                <div
+                  key={member.name}
+                  className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 flex flex-col items-center text-center hover:bg-white/15 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                >
+                  <div className={`h-16 w-16 bg-gradient-to-tr ${member.from} ${member.to} rounded-full flex items-center justify-center shadow-lg mb-4`}>
+                    <span className="text-white font-extrabold text-lg tracking-wide">{member.initials}</span>
+                  </div>
+                  <h3 className="text-white font-bold text-lg leading-tight">{member.name}</h3>
+                  <span className="mt-1 text-xs font-semibold uppercase tracking-widest text-primary-300">{member.role}</span>
+                  <div className="mt-3 flex items-center gap-1">
+                    <Code className="h-3 w-3 text-gray-400" />
+                    <span className="text-gray-400 text-xs">Code Crafter</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
