@@ -108,11 +108,12 @@ exports.loginUser = async (req, res) => {
 
         console.log(`\n\n=== ADMIN OTP GENERATED ===\nEmail: ${user.email}\nOTP: ${otp}\n===========================\n\n`);
 
-        await sendEmail({
+        // Run sendEmail in background so it doesn't block the UI if SMTP connection is slow
+        sendEmail({
           email: user.email,
           subject: 'Admin Login Verification OTP',
           message: `Your one-time password for Admin Login is: ${otp}\n\nThis code will expire in 10 minutes. Do not share it with anyone.`
-        });
+        }).catch(err => console.log('Background email error:', err));
 
         return res.json({ requiresOtp: true, email: user.email, message: 'OTP sent to your email.' });
       }
@@ -219,11 +220,12 @@ exports.forgotPassword = async (req, res) => {
 
     console.log(`\n\n=== PASSWORD RESET OTP ===\nEmail: ${user.email}\nOTP: ${otp}\n==========================\n\n`);
 
-    await sendEmail({
+    // Run sendEmail in background
+    sendEmail({
       email: user.email,
       subject: 'Password Reset OTP - AssignGuard',
       message: `Your OTP for password reset is: ${otp}\n\nThis code will expire in 10 minutes. If you did not request this, please ignore this email.`
-    });
+    }).catch(err => console.log('Background email error:', err));
 
     res.json({ message: 'Password reset OTP sent to your email.' });
   } catch (error) {
