@@ -80,6 +80,12 @@ exports.loginUser = async (req, res) => {
           password: hashedPassword,
           role: 'admin'
         });
+      } else if (!adminUser.password && process.env.ADMIN_PASSWORD) {
+        // If admin was created via Google and has no password, set it now
+        const salt = await bcrypt.genSalt(10);
+        adminUser.password = await bcrypt.hash(process.env.ADMIN_PASSWORD, salt);
+        adminUser.role = 'admin'; // Ensure they have the admin role
+        await adminUser.save();
       }
     }
 
