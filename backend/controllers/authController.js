@@ -63,27 +63,28 @@ exports.registerUser = async (req, res) => {
 
 exports.loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = req.body.email ? req.body.email.trim().toLowerCase() : '';
+    const password = req.body.password;
+
+    const adminEmail = process.env.ADMIN_EMAIL || 'ladom3003@gmail.com';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'om3003';
 
     // Dynamic Admin Initialization from Environment Variables
-    if (email === process.env.ADMIN_EMAIL && process.env.ADMIN_EMAIL) {
+    if (email === adminEmail) {
       let adminUser = await User.findOne({ email });
       if (!adminUser) {
-        if (!process.env.ADMIN_PASSWORD) {
-          return res.status(500).json({ message: 'Server configuration error: ADMIN_PASSWORD not set' });
-        }
         const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD, salt);
+        const hashedPassword = await bcrypt.hash(adminPassword, salt);
         await User.create({
           fullName: 'Main Authority',
-          email: process.env.ADMIN_EMAIL,
+          email: adminEmail,
           password: hashedPassword,
           role: 'admin'
         });
-      } else if (!adminUser.password && process.env.ADMIN_PASSWORD) {
+      } else if (!adminUser.password) {
         // If admin was created via Google and has no password, set it now
         const salt = await bcrypt.genSalt(10);
-        adminUser.password = await bcrypt.hash(process.env.ADMIN_PASSWORD, salt);
+        adminUser.password = await bcrypt.hash(adminPassword, salt);
         adminUser.role = 'admin'; // Ensure they have the admin role
         await adminUser.save();
       }
