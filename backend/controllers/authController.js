@@ -185,7 +185,13 @@ exports.googleOAuthSuccess = async (req, res) => {
 
   // Instead of res.json, we redirect to frontend with token in URL 
   // since the flow started from a browser navigation
-  const frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+  let frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+  
+  // Force override the wrong URL just in case Render has the typo in env variables
+  if (frontendUrl.includes('assignguard.vercel.app')) {
+    frontendUrl = 'https://assignmetgurd.vercel.app';
+  }
+
   res.redirect(`${frontendUrl}/auth/success?token=${token}`);
 };
 
