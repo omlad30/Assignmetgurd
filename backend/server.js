@@ -40,7 +40,7 @@ io.on('connection', (socket) => {
   socket.on('join_assignment', (assignmentId) => {
     socket.join(assignmentId);
   });
-  
+
   socket.on('join_classroom', (classroomId) => {
     socket.join(`classroom_${classroomId}`);
   });
@@ -103,8 +103,8 @@ app.get('/', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ 
-    message: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message || 'Server Error' 
+  res.status(500).json({
+    message: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message || 'Server Error'
   });
 });
 
