@@ -10,6 +10,7 @@ const Home = () => {
   const [password, setPassword] = useState('');
   const [otpRequested, setOtpRequested] = useState(false);
   const [otp, setOtp] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { loginWithToken, user } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
@@ -41,6 +42,8 @@ const Home = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    
     if (otpRequested) {
       try {
         const res = await api.post('/auth/verify-otp', { email, otp });
@@ -48,6 +51,8 @@ const Home = () => {
         toast.success('Admin Login successful!');
       } catch (err) {
         toast.error(err.response?.data?.message || 'OTP verification failed');
+      } finally {
+        setIsLoading(false);
       }
       return;
     }
@@ -63,6 +68,8 @@ const Home = () => {
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -179,12 +186,20 @@ const Home = () => {
                   <div>
                     <button
                       type="submit"
-                      className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-2xl text-white bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-xl shadow-primary-500/20 transition-all duration-300 transform hover:-translate-y-0.5"
+                      disabled={isLoading}
+                      className={`group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-2xl text-white shadow-xl transition-all duration-300 ${isLoading ? 'bg-primary-400 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-primary-500/20 transform hover:-translate-y-0.5'}`}
                     >
                       <span className="absolute left-0 inset-y-0 flex items-center pl-4">
-                        <LogIn className="h-5 w-5 text-white/70 group-hover:text-white transition-colors" />
+                        {isLoading ? (
+                          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        ) : (
+                          <LogIn className="h-5 w-5 text-white/70 group-hover:text-white transition-colors" />
+                        )}
                       </span>
-                      Sign in securely
+                      {isLoading ? 'Signing in securely...' : 'Sign in securely'}
                     </button>
                   </div>
                 </>
@@ -213,9 +228,10 @@ const Home = () => {
                   <div>
                     <button
                       type="submit"
-                      className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-2xl text-white bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-xl shadow-primary-500/20 transition-all duration-300 transform hover:-translate-y-0.5"
+                      disabled={isLoading}
+                      className={`group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-2xl text-white shadow-xl transition-all duration-300 ${isLoading ? 'bg-primary-400 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-primary-500/20 transform hover:-translate-y-0.5'}`}
                     >
-                      Verify OTP
+                      {isLoading ? 'Verifying OTP...' : 'Verify OTP'}
                     </button>
                     <button 
                       type="button" 
