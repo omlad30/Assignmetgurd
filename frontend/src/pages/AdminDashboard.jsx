@@ -42,9 +42,9 @@ const AdminDashboard = () => {
       <div className="absolute top-0 -left-4 w-72 h-72 bg-emerald-300 rounded-full mix-blend-multiply filter blur-2xl opacity-30 animate-blob"></div>
       <div className="absolute top-0 -right-4 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-2xl opacity-30 animate-blob animation-delay-2000"></div>
       
-      <div className="relative mb-8 flex justify-between items-center z-10">
+      <div className="relative mb-8 flex flex-col md:flex-row md:justify-between items-start md:items-center z-10 gap-4">
         <div>
-          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 tracking-tight">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 tracking-tight">
             Institutional Overview
           </h1>
           <p className="mt-2 text-sm text-gray-500 font-medium">
@@ -53,7 +53,7 @@ const AdminDashboard = () => {
         </div>
         <button 
           onClick={logout}
-          className="bg-white/60 backdrop-blur-md px-4 py-2 rounded-xl text-sm font-bold text-gray-700 hover:text-rose-600 border border-white/50 shadow-sm hover:shadow-md transition-all"
+          className="bg-white/60 backdrop-blur-md px-4 py-2 rounded-xl text-sm font-bold text-gray-700 hover:text-rose-600 border border-white/50 shadow-sm hover:shadow-md transition-all whitespace-nowrap"
         >
           Secure Logout
         </button>
@@ -156,7 +156,7 @@ const AdminDashboard = () => {
             <div className="glass-panel p-6 lg:col-span-2">
               <h3 className="text-lg font-bold text-gray-800 mb-4">User Growth (Last 7 Days)</h3>
               <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                   <BarChart data={analytics.userGrowth} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis dataKey="date" stroke="#888" fontSize={12} tickMargin={10} />
@@ -175,7 +175,7 @@ const AdminDashboard = () => {
             <div className="glass-panel p-6">
               <h3 className="text-lg font-bold text-gray-800 mb-4">Role Distribution</h3>
               <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                   <PieChart>
                     <Pie
                       data={analytics.roleDistribution}

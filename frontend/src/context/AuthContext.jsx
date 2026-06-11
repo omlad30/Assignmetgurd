@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect } from 'react';
-import { jwtDecode } from 'jwt-decode';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { auth } from '../firebase';
 import api from '../utils/api';
 
 export const AuthContext = createContext();
@@ -9,46 +10,38 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const initAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (token && token !== 'undefined' && token !== 'null') {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
         try {
-          const decoded = jwtDecode(token);
-          // Check expiration
-          if (decoded.exp * 1000 < Date.now()) {
-            logout();
-          } else {
-            // Fetch updated user info
-            const res = await api.get('/auth/me');
-            setUser(res.data);
-          }
+          // Send request to our backend to sync the user and get their MongoDB profile
+          const res = await api.post('/auth/sync', {
+            // we can pass extra info if needed, but email is in the token
+          });
+          setUser(res.data);
         } catch (error) {
-          console.error("Auth init failed:", error);
-          logout();
+          console.error("Failed to sync user with backend:", error);
+          setUser(null);
         }
-      } else if (token === 'undefined' || token === 'null') {
-        localStorage.removeItem('token');
+      } else {
+        setUser(null);
       }
       setLoading(false);
-    };
-    initAuth();
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const loginWithToken = async (token) => {
-    if (!token || token === 'undefined' || token === 'null') {
-      throw new Error('Invalid token received from server');
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+    } catch (error) {
+      console.error("Logout failed:", error);
     }
-    localStorage.setItem('token', token);
-    const res = await api.get('/auth/me');
-    setUser(res.data);
-  };
-
-  const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
   };
 
   const refreshUser = async () => {
+    if (!auth.currentUser) return;
     try {
       const res = await api.get('/auth/me');
       setUser(res.data);
@@ -57,8 +50,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // We don't need loginWithToken anymore, Firebase manages auth state automatically
+
   return (
-    <AuthContext.Provider value={{ user, setUser, loginWithToken, logout, refreshUser, loading }}>
+    <AuthContext.Provider value={{ user, setUser, logout, refreshUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

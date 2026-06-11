@@ -1,23 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const passport = require('passport');
-const { registerUser, loginUser, getMe, googleOAuthSuccess, verifyOtp, forgotPassword, resetPassword } = require('../controllers/authController');
+const { syncUser, getMe, verifyOtp } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
-router.post('/register', registerUser);
-router.post('/login', loginUser);
-router.post('/verify-otp', verifyOtp);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
+// Endpoint to sync user data after Firebase login/registration
+router.post('/sync', protect, syncUser);
+
+// Verify Admin OTP
+router.post('/verify-otp', protect, verifyOtp);
+
+// Get current user data
 router.get('/me', protect, getMe);
-
-// Google OAuth
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-router.get(
-  '/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login', session: false }),
-  googleOAuthSuccess
-);
 
 module.exports = router;

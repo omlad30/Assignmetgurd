@@ -34,3 +34,6 @@ dist/
 build/
 .next/
 out/
+
+# Firebase
+serviceAccountKey.json

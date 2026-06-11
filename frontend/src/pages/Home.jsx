@@ -1,9 +1,11 @@
 import { useState, useContext, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import api from '../utils/api';
 import { toast } from 'react-toastify';
 import { Mail, Lock, LogIn, ShieldCheck, BrainCircuit, GraduationCap } from 'lucide-react';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { auth } from '../firebase';
 
 const Home = () => {
   const [email, setEmail] = useState('');
@@ -11,43 +13,41 @@ const Home = () => {
   const [otpRequested, setOtpRequested] = useState(false);
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { loginWithToken, user } = useContext(AuthContext);
+  const { user, setUser } = useContext(AuthContext);
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     if (user) {
-      navigate(user.role === 'teacher' ? '/teacher' : '/student');
+      if (user.requiresOtp) {
+        setOtpRequested(true);
+        setIsLoading(false);
+      } else {
+        if (user.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate(user.role === 'teacher' ? '/teacher' : '/student');
+        }
+      }
     }
-    // Check if redirected from Google OAuth Success
-    const queryParams = new URLSearchParams(location.search);
-    const token = queryParams.get('token');
-    if (token) {
-      loginWithToken(token).then(() => {
-        toast.success("Successfully logged in with Google!");
-      }).catch(() => {
-        toast.error("Google authentication failed.");
-      });
-    }
-  }, [user, navigate, location.search, loginWithToken]);
+  }, [user, navigate]);
 
   useEffect(() => {
-    if (location.hash === '#login-form') {
+    if (window.location.hash === '#login-form') {
       const el = document.getElementById('login-form');
       if (el) {
         el.scrollIntoView({ behavior: 'smooth' });
       }
     }
-  }, [location.hash]);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     if (otpRequested) {
       try {
-        const res = await api.post('/auth/verify-otp', { email, otp });
-        await loginWithToken(res.data.token);
+        const res = await api.post('/auth/verify-otp', { otp });
+        setUser(res.data);
         toast.success('Admin Login successful!');
       } catch (err) {
         toast.error(err.response?.data?.message || 'OTP verification failed');
@@ -58,35 +58,31 @@ const Home = () => {
     }
 
     try {
-      const res = await api.post('/auth/login', { email, password });
-      if (res.data.requiresOtp) {
-        setOtpRequested(true);
-        toast.info(res.data.message);
-      } else {
-        await loginWithToken(res.data.token);
-        toast.success('Login successful!');
-      }
+      await signInWithEmailAndPassword(auth, email, password);
+      // AuthContext handles the rest
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Login failed');
-    } finally {
+      toast.error(err.message || 'Login failed');
       setIsLoading(false);
     }
   };
 
-  const loginWithGoogle = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
+  const loginWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      // AuthContext handles the rest
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex lg:items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8 relative overflow-x-hidden py-10">
-      {/* Animated Background Blobs */}
       <div className="absolute top-10 -left-10 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob"></div>
       <div className="absolute top-0 right-10 w-96 h-96 bg-yellow-300 rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob animation-delay-2000"></div>
       <div className="absolute -bottom-8 left-1/2 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob animation-delay-4000"></div>
 
-      <div className="max-w-6xl w-full flex flex-col-reverse lg:flex-row items-center gap-12 relative z-10">
-
-        {/* Left Side - Information */}
+      <div className="max-w-6xl w-full flex flex-col lg:flex-row items-center gap-12 relative z-10">
         <div className="flex-1 w-full text-gray-900 px-2 sm:px-4 mt-8 lg:mt-0 text-center lg:text-left">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-4 lg:mb-6">
             The Smartest Way to <br className="hidden lg:block" />
@@ -137,7 +133,6 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Right Side - Login Form */}
         <div className="flex-1 w-full max-w-md mx-auto" id="login-form">
           <div className="glass-panel p-6 sm:p-10 relative">
             <div>
@@ -180,6 +175,14 @@ const Home = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                       />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end">
+                    <div className="text-sm">
+                      <Link to="/forgot-password" className="font-medium text-primary-600 hover:text-primary-500 transition-colors">
+                        Forgot your password?
+                      </Link>
                     </div>
                   </div>
 
@@ -233,8 +236,8 @@ const Home = () => {
                     >
                       {isLoading ? 'Verifying OTP...' : 'Verify OTP'}
                     </button>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => setOtpRequested(false)}
                       className="mt-4 w-full text-sm text-gray-500 hover:text-primary-600 transition-colors"
                     >

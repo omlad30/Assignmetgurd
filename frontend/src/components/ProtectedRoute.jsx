@@ -13,7 +13,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     );
   }
 
-  if (!user) {
+  if (!user || user.requiresOtp) {
     return <Navigate to="/login" replace />;
   }
 

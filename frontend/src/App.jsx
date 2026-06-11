@@ -34,9 +34,9 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-200 overflow-x-hidden">
       <Navbar />
-      <main>
+      <main className="flex-grow">
         <Routes>
           <Route path="/" element={<HomeRedirect />} />
           <Route path="/login" element={<Home />} />

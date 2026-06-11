@@ -1,9 +1,11 @@
 import { useState, useContext, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import api from '../utils/api';
 import { toast } from 'react-toastify';
 import { Mail, Lock, LogIn, Key } from 'lucide-react';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { auth } from '../firebase';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -11,29 +13,23 @@ const Login = () => {
   const [otpRequested, setOtpRequested] = useState(false);
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { loginWithToken, user } = useContext(AuthContext);
+  const { user, setUser } = useContext(AuthContext);
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     if (user) {
-      if (user.role === 'admin') {
-        navigate('/admin');
+      if (user.requiresOtp) {
+        setOtpRequested(true);
+        setIsLoading(false);
       } else {
-        navigate(user.role === 'teacher' ? '/teacher' : '/student');
+        if (user.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate(user.role === 'teacher' ? '/teacher' : '/student');
+        }
       }
     }
-    // Check if redirected from Google OAuth Success
-    const queryParams = new URLSearchParams(location.search);
-    const token = queryParams.get('token');
-    if (token) {
-      loginWithToken(token).then(() => {
-        toast.success("Successfully logged in with Google!");
-      }).catch(() => {
-        toast.error("Google authentication failed.");
-      });
-    }
-  }, [user, navigate, location, loginWithToken]);
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,9 +37,8 @@ const Login = () => {
     
     if (otpRequested) {
       try {
-        const res = await api.post('/auth/verify-otp', { email, otp });
-        console.log('Verify OTP Response:', res.data);
-        await loginWithToken(res.data.token);
+        const res = await api.post('/auth/verify-otp', { otp });
+        setUser(res.data);
         toast.success('Admin Login successful!');
       } catch (err) {
         toast.error(err.response?.data?.message || 'OTP verification failed');
@@ -54,29 +49,26 @@ const Login = () => {
     }
 
     try {
-      const res = await api.post('/auth/login', { email, password });
-      console.log('Login Response:', res.data);
-      if (res.data.requiresOtp) {
-        setOtpRequested(true);
-        toast.info(res.data.message);
-      } else {
-        await loginWithToken(res.data.token);
-        toast.success('Login successful!');
-      }
+      await signInWithEmailAndPassword(auth, email, password);
+      // The onAuthStateChanged listener in AuthContext will handle the backend sync
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Login failed');
-    } finally {
+      toast.error(err.message || 'Login failed');
       setIsLoading(false);
     }
   };
 
-  const loginWithGoogle = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
+  const loginWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      // The onAuthStateChanged listener in AuthContext will handle the backend sync
+    } catch(err) {
+      toast.error(err.message);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8 relative overflow-hidden flex-col">
-      {/* Animated Background Blobs */}
       <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-2xl opacity-70 animate-blob"></div>
       <div className="absolute top-0 -right-4 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-2xl opacity-70 animate-blob animation-delay-2000"></div>
       <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-2xl opacity-70 animate-blob animation-delay-4000"></div>

@@ -101,13 +101,13 @@ const AssignmentResult = () => {
             </div>
           )}
 
-          <div className="flex justify-between items-center pt-6 border-t border-gray-100">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-6 border-t border-gray-100 gap-4">
             <div>
               <span className="text-sm text-gray-500">Submitted at: </span>
               <span className="text-sm font-medium text-gray-900">{new Date(submission.submittedAt).toLocaleString('en-IN')}</span>
             </div>
             {submission.fileUrl && (
-              <a href={submission.fileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition">
+              <a href={submission.fileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition w-full sm:w-auto justify-center">
                 <Download className="mr-2 h-4 w-4" /> Download Original File
               </a>
             )}

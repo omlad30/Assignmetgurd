@@ -4,6 +4,8 @@ import { AuthContext } from '../context/AuthContext';
 import api from '../utils/api';
 import { toast } from 'react-toastify';
 import { User, Mail, Lock, BookOpen, UserCircle, ShieldCheck } from 'lucide-react';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebase';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -15,7 +17,7 @@ const Register = () => {
     subject: '',
     secretCode: ''
   });
-  const { loginWithToken } = useContext(AuthContext);
+  const { setUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -25,18 +27,22 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.post('/auth/register', formData);
-      await loginWithToken(res.data.token);
+      // 1. Create user in Firebase
+      await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      
+      // 2. Sync user details to backend
+      const res = await api.post('/auth/sync', formData);
+      setUser(res.data);
+      
       toast.success('Registration successful!');
       navigate(formData.role === 'teacher' ? '/teacher' : '/student');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Registration failed');
+      toast.error(err.response?.data?.message || err.message || 'Registration failed');
     }
   };
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 relative overflow-x-hidden">
-      {/* Animated Background Blobs */}
       <div className="absolute top-10 -left-10 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob"></div>
       <div className="absolute top-0 right-10 w-96 h-96 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob animation-delay-2000"></div>
       <div className="absolute -bottom-8 left-1/2 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob animation-delay-4000"></div>
