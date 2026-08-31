@@ -156,7 +156,7 @@ const AdminDashboard = () => {
             <div className="glass-panel p-6 lg:col-span-2">
               <h3 className="text-lg font-bold text-gray-800 mb-4">User Growth (Last 7 Days)</h3>
               <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                <ResponsiveContainer width="99%" height="100%" minWidth={0}>
                   <BarChart data={analytics.userGrowth} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis dataKey="date" stroke="#888" fontSize={12} tickMargin={10} />
@@ -175,7 +175,7 @@ const AdminDashboard = () => {
             <div className="glass-panel p-6">
               <h3 className="text-lg font-bold text-gray-800 mb-4">Role Distribution</h3>
               <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                <ResponsiveContainer width="99%" height="100%" minWidth={0}>
                   <PieChart>
                     <Pie
                       data={analytics.roleDistribution}
