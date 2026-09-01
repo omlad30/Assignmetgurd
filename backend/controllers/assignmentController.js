@@ -79,6 +79,31 @@ exports.getClassroomAssignments = async (req, res) => {
   }
 };
 
+exports.updateAssignment = async (req, res) => {
+  try {
+    const assignment = await Assignment.findById(req.params.id);
+    if (!assignment) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+
+    if (assignment.teacherId && assignment.teacherId.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ message: 'Not authorized to edit this assignment' });
+    }
+
+    const { title, subject, description, deadline, targetDivision } = req.body;
+    if (title) assignment.title = title;
+    if (subject) assignment.subject = subject;
+    if (description !== undefined) assignment.description = description;
+    if (deadline) assignment.deadline = deadline;
+    if (targetDivision) assignment.targetDivision = targetDivision;
+
+    await assignment.save();
+    res.json(assignment);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 exports.deleteAssignment = async (req, res) => {
   try {
     const assignment = await Assignment.findById(req.params.id);
