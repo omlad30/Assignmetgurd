@@ -2,7 +2,7 @@ const Assignment = require('../models/Assignment');
 
 exports.createAssignment = async (req, res) => {
   try {
-    const { title, subject, description, deadline, classroomId } = req.body;
+    const { title, subject, description, deadline, classroomId, targetDivision } = req.body;
 
     const assignment = await Assignment.create({
       title,
@@ -11,6 +11,7 @@ exports.createAssignment = async (req, res) => {
       deadline,
       teacherId: req.user._id,
       classroomId: classroomId || null,
+      targetDivision: targetDivision || 'ALL',
     });
 
     res.status(201).json(assignment);
@@ -54,7 +55,22 @@ exports.getAssignmentById = async (req, res) => {
 
 exports.getClassroomAssignments = async (req, res) => {
   try {
-    const assignments = await Assignment.find({ classroomId: req.params.classroomId })
+    let query = { classroomId: req.params.classroomId };
+
+    // If request is from a student, filter assignments meant for ALL or matching student's division
+    if (req.user && req.user.role === 'student') {
+      const studentDiv = (req.user.division || '').toUpperCase();
+      query.$or = [
+        { targetDivision: 'ALL' },
+        { targetDivision: null },
+        { targetDivision: { $exists: false } }
+      ];
+      if (studentDiv) {
+        query.$or.push({ targetDivision: studentDiv });
+      }
+    }
+
+    const assignments = await Assignment.find(query)
       .populate('teacherId', 'fullName')
       .sort({ createdAt: -1 });
     res.json(assignments);

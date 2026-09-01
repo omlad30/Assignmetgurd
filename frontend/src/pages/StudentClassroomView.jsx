@@ -11,19 +11,22 @@ const StudentClassroomView = () => {
   const { id } = useParams();
   const [assignments, setAssignments] = useState([]);
   const [submissions, setSubmissions] = useState([]);
+  const [classroom, setClassroom] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [assignRes, subRes] = await Promise.all([
+        const [assignRes, subRes, classRes] = await Promise.all([
           api.get(`/assignments/classroom/${id}`),
-          api.get('/submissions/student')
+          api.get('/submissions/student'),
+          api.get(`/classrooms/${id}`)
         ]);
         setAssignments(assignRes.data);
         setSubmissions(subRes.data);
+        setClassroom(classRes.data);
       } catch (err) {
-        toast.error('Failed to load assignments');
+        toast.error('Failed to load classroom details');
       } finally {
         setLoading(false);
       }
@@ -70,14 +73,17 @@ const StudentClassroomView = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center mb-8">
-        <Link to="/student" className="mr-4 p-2 bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition shadow-sm">
+      <div className="flex items-center mb-8 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <Link to="/student" className="mr-4 p-2 bg-gray-50 border border-gray-200 rounded-full hover:bg-gray-100 transition shadow-sm">
           <ArrowLeft className="h-5 w-5 text-gray-600" />
         </Link>
         <div className="flex-1 min-w-0">
           <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            Classroom Assignments
+            {classroom?.name || 'Classroom Assignments'}
           </h2>
+          <p className="mt-1 text-sm text-gray-500 font-medium">
+            {classroom?.teacherId?.fullName ? `Instructor: ${classroom.teacherId.fullName}` : 'Assignments for this class'}
+          </p>
         </div>
       </div>
 
@@ -90,10 +96,15 @@ const StudentClassroomView = () => {
             <div key={assignment._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
               <div className="p-6">
                 <div className="flex justify-between items-start">
-                  <div>
+                  <div className="space-x-1.5 space-y-1">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mb-2">
                       {assignment.subject}
                     </span>
+                    {assignment.targetDivision && assignment.targetDivision !== 'ALL' && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 mb-2">
+                        Div {assignment.targetDivision}
+                      </span>
+                    )}
                     <h3 className="text-lg font-bold text-gray-900 truncate" title={assignment.title}>{assignment.title}</h3>
                   </div>
                   {submission && <StatusBadge status={submission.status} />}
