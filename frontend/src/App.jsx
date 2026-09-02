@@ -15,6 +15,8 @@ import AssignmentResult from './pages/AssignmentResult';
 import AssignmentSubmissionsView from './pages/AssignmentSubmissionsView';
 import ClassroomView from './pages/ClassroomView';
 import StudentClassroomView from './pages/StudentClassroomView';
+import TakeQuiz from './pages/TakeQuiz';
+import QuizResultsView from './pages/QuizResultsView';
 import AdminDashboard from './pages/AdminDashboard';
 import NotFound from './pages/NotFound';
 
@@ -66,6 +68,11 @@ function App() {
               <AssignmentResult />
             </ProtectedRoute>
           } />
+          <Route path="/student/quiz/:id" element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <TakeQuiz />
+            </ProtectedRoute>
+          } />
 
           {/* Teacher Routes */}
           <Route path="/teacher" element={
@@ -81,6 +88,11 @@ function App() {
           <Route path="/assignment-results/:id" element={
             <ProtectedRoute allowedRoles={['teacher']}>
               <AssignmentSubmissionsView />
+            </ProtectedRoute>
+          } />
+          <Route path="/quiz-results/:id" element={
+            <ProtectedRoute allowedRoles={['teacher', 'admin']}>
+              <QuizResultsView />
             </ProtectedRoute>
           } />
 

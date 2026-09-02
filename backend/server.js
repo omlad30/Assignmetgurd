@@ -16,6 +16,7 @@ const authRoutes = require('./routes/auth');
 const assignmentRoutes = require('./routes/assignments');
 const submissionRoutes = require('./routes/submissions');
 const classroomRoutes = require('./routes/classrooms');
+const quizRoutes = require('./routes/quizzes');
 
 // Initialize app
 const http = require('http');
@@ -107,6 +108,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/submissions', submissionRoutes);
 app.use('/api/classrooms', classroomRoutes);
+app.use('/api/quizzes', quizRoutes);
 app.use('/api/admin', require('./routes/admin'));
 
 // Root Endpoint
