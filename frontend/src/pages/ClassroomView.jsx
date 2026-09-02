@@ -323,22 +323,20 @@ const ClassroomView = () => {
         <div className="flex bg-gray-200/70 p-1.5 rounded-2xl">
           <button
             onClick={() => setActiveContentType('assignments')}
-            className={`flex items-center px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${
-              activeContentType === 'assignments'
+            className={`flex items-center px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${activeContentType === 'assignments'
                 ? 'bg-white text-gray-900 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
-            }`}
+              }`}
           >
             <FileText className="h-4 w-4 mr-2 text-primary-600" />
             Assignments ({assignments.length})
           </button>
           <button
             onClick={() => setActiveContentType('quizzes')}
-            className={`flex items-center px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${
-              activeContentType === 'quizzes'
+            className={`flex items-center px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${activeContentType === 'quizzes'
                 ? 'bg-white text-gray-900 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
-            }`}
+              }`}
           >
             <HelpCircle className="h-4 w-4 mr-2 text-purple-600" />
             Quizzes ({quizzes.length})
@@ -608,34 +606,40 @@ const ClassroomView = () => {
 
             <form onSubmit={handleSubmitQuiz} className="flex-1 overflow-y-auto p-6 space-y-6">
               {/* Basic Meta */}
-              <div className="grid md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Quiz Title</label>
-                  <input required type="text" placeholder="e.g. Midterm Physics Quiz" className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white" value={quizFormData.title} onChange={e => setQuizFormData({ ...quizFormData, title: e.target.value })} />
+              <div className="space-y-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Quiz Title</label>
+                    <input required type="text" placeholder="e.g. Midterm Physics Quiz" className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white" value={quizFormData.title} onChange={e => setQuizFormData({ ...quizFormData, title: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Subject</label>
+                    <input required type="text" placeholder="e.g. Physics" className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white" value={quizFormData.subject} onChange={e => setQuizFormData({ ...quizFormData, subject: e.target.value })} />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Subject</label>
-                  <input required type="text" placeholder="e.g. Physics" className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white" value={quizFormData.subject} onChange={e => setQuizFormData({ ...quizFormData, subject: e.target.value })} />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Target Division</label>
-                  <select
-                    className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white font-medium"
-                    value={quizFormData.targetDivision}
-                    onChange={e => setQuizFormData({ ...quizFormData, targetDivision: e.target.value })}
-                  >
-                    <option value="ALL">All Divisions</option>
-                    <option value="A">Division A Only</option>
-                    <option value="B">Division B Only</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Start Date & Time</label>
-                  <input required type="datetime-local" className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white font-medium" value={quizFormData.startTime} onChange={e => setQuizFormData({ ...quizFormData, startTime: e.target.value })} />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">End Date & Time</label>
-                  <input required type="datetime-local" className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white font-medium" value={quizFormData.endTime} onChange={e => setQuizFormData({ ...quizFormData, endTime: e.target.value })} />
+
+                {/* 3 equal size sections in a single row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Target Division</label>
+                    <select
+                      className="w-full border border-gray-300 rounded-xl px-3 py-2 bg-white font-medium text-sm"
+                      value={quizFormData.targetDivision}
+                      onChange={e => setQuizFormData({ ...quizFormData, targetDivision: e.target.value })}
+                    >
+                      <option value="ALL">All Divisions</option>
+                      <option value="A">Division A Only</option>
+                      <option value="B">Division B Only</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Start Date & Time</label>
+                    <input required type="datetime-local" className="w-full border border-gray-300 rounded-xl px-3 py-2 bg-white font-medium text-sm" value={quizFormData.startTime} onChange={e => setQuizFormData({ ...quizFormData, startTime: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">End Date & Time</label>
+                    <input required type="datetime-local" className="w-full border border-gray-300 rounded-xl px-3 py-2 bg-white font-medium text-sm" value={quizFormData.endTime} onChange={e => setQuizFormData({ ...quizFormData, endTime: e.target.value })} />
+                  </div>
                 </div>
               </div>
 
