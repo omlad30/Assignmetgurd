@@ -46,9 +46,16 @@ const quizSchema = new mongoose.Schema({
     enum: ['ALL', 'A', 'B'],
     default: 'ALL',
   },
-  deadline: {
+  startTime: {
+    type: Date,
+    default: Date.now,
+  },
+  endTime: {
     type: Date,
     required: true,
+  },
+  deadline: {
+    type: Date,
   },
   timeLimitMinutes: {
     type: Number,

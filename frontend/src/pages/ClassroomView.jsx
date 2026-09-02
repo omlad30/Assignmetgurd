@@ -33,7 +33,8 @@ const ClassroomView = () => {
     title: '',
     subject: defaultSubject,
     description: '',
-    deadline: '',
+    startTime: '',
+    endTime: '',
     targetDivision: 'ALL',
     isPasswordProtected: false,
     password: '',
@@ -142,11 +143,13 @@ const ClassroomView = () => {
 
   // Quiz Handlers & Builder
   const handleOpenCreateQuiz = () => {
+    const nowStr = new Date(Date.now() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
     setQuizFormData({
       title: '',
       subject: user?.subject || classroom?.name || '',
       description: '',
-      deadline: '',
+      startTime: nowStr,
+      endTime: '',
       targetDivision: 'ALL',
       isPasswordProtected: false,
       password: '',
@@ -210,6 +213,16 @@ const ClassroomView = () => {
     e.preventDefault();
 
     // Validation
+    if (!quizFormData.startTime || !quizFormData.endTime) {
+      toast.error('Please specify both Start Date/Time and End Date/Time.');
+      return;
+    }
+
+    if (new Date(quizFormData.endTime) <= new Date(quizFormData.startTime)) {
+      toast.error('End Date & Time must be after Start Date & Time.');
+      return;
+    }
+
     if (quizFormData.isPasswordProtected && (!quizFormData.password || !quizFormData.password.trim())) {
       toast.error('Please enter a password for the password-protected quiz.');
       return;
@@ -487,11 +500,15 @@ const ClassroomView = () => {
                   <h3 className="text-lg font-bold text-gray-900 truncate pr-10 mb-1">{quiz.title}</h3>
                   <p className="text-xs text-gray-500 mb-3">{quiz.questions?.length || 0} Questions &bull; {quiz.description || 'No description'}</p>
 
-                  <div className="space-y-2 mb-6">
-                    <div className={`flex items-center text-sm font-medium ${isPassed ? 'text-red-600' : 'text-gray-600'}`}>
-                      <Calendar className="flex-shrink-0 mr-1.5 h-4 w-4" />
-                      Due: {new Date(quiz.deadline).toLocaleString('en-IN')}
-                      {isPassed && <span className="ml-2 text-xs font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Closed</span>}
+                  <div className="space-y-1.5 mb-6 text-xs">
+                    <div className="flex items-center text-gray-600">
+                      <Calendar className="flex-shrink-0 mr-1.5 h-3.5 w-3.5 text-purple-600" />
+                      <span className="font-bold mr-1">Starts:</span> {quiz.startTime ? new Date(quiz.startTime).toLocaleString('en-IN') : 'Immediate'}
+                    </div>
+                    <div className={`flex items-center ${isPassed ? 'text-red-600 font-bold' : 'text-gray-600'}`}>
+                      <Calendar className="flex-shrink-0 mr-1.5 h-3.5 w-3.5 text-rose-500" />
+                      <span className="font-bold mr-1">Ends:</span> {new Date(quiz.endTime || quiz.deadline).toLocaleString('en-IN')}
+                      {isPassed && <span className="ml-2 text-[10px] font-extrabold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Closed</span>}
                     </div>
                   </div>
 
@@ -613,8 +630,12 @@ const ClassroomView = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Deadline</label>
-                  <input required type="datetime-local" className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white font-medium" value={quizFormData.deadline} onChange={e => setQuizFormData({ ...quizFormData, deadline: e.target.value })} />
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Start Date & Time</label>
+                  <input required type="datetime-local" className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white font-medium" value={quizFormData.startTime} onChange={e => setQuizFormData({ ...quizFormData, startTime: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">End Date & Time</label>
+                  <input required type="datetime-local" className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white font-medium" value={quizFormData.endTime} onChange={e => setQuizFormData({ ...quizFormData, endTime: e.target.value })} />
                 </div>
               </div>
 

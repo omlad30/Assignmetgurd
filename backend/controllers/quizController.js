@@ -11,15 +11,19 @@ exports.createQuiz = async (req, res) => {
       description,
       classroomId,
       targetDivision,
-      deadline,
+      startTime,
+      endTime,
       timeLimitMinutes,
       isPasswordProtected,
       password,
       questions
     } = req.body;
 
-    if (!title || !subject || !classroomId || !deadline || !questions || questions.length === 0) {
-      return res.status(400).json({ message: 'Title, subject, classroom, deadline, and at least one question are required.' });
+    const finalEndTime = endTime || req.body.deadline;
+    const finalStartTime = startTime || Date.now();
+
+    if (!title || !subject || !classroomId || !finalEndTime || !questions || questions.length === 0) {
+      return res.status(400).json({ message: 'Title, subject, classroom, start date/time, end date/time, and at least one question are required.' });
     }
 
     if (isPasswordProtected && (!password || password.trim() === '')) {
@@ -42,7 +46,9 @@ exports.createQuiz = async (req, res) => {
       teacherId: req.user._id,
       classroomId,
       targetDivision: targetDivision || 'ALL',
-      deadline,
+      startTime: finalStartTime,
+      endTime: finalEndTime,
+      deadline: finalEndTime,
       timeLimitMinutes: timeLimitMinutes || 0,
       isPasswordProtected: !!isPasswordProtected,
       password: isPasswordProtected ? password.trim() : '',
@@ -180,9 +186,14 @@ exports.submitQuiz = async (req, res) => {
       return res.status(404).json({ message: 'Quiz not found.' });
     }
 
-    // Check deadline
-    if (new Date(quiz.deadline) < new Date()) {
-      return res.status(400).json({ message: 'Quiz deadline has passed. Submissions are closed.' });
+    // Check start and end time window
+    const now = new Date();
+    const quizEndTime = quiz.endTime || quiz.deadline;
+    if (quiz.startTime && new Date(quiz.startTime) > now) {
+      return res.status(400).json({ message: 'Quiz has not started yet.' });
+    }
+    if (quizEndTime && new Date(quizEndTime) < now) {
+      return res.status(400).json({ message: 'Quiz has ended. Submissions are closed.' });
     }
 
     // Check password if required

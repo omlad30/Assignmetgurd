@@ -278,7 +278,10 @@ const StudentClassroomView = () => {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {quizzes.map(quiz => {
             const quizSub = getQuizSubmission(quiz._id);
-            const isPassed = new Date(quiz.deadline) < new Date();
+            const now = new Date();
+            const quizEndTime = quiz.endTime || quiz.deadline;
+            const hasStarted = !quiz.startTime || new Date(quiz.startTime) <= now;
+            const hasEnded = quizEndTime && new Date(quizEndTime) < now;
 
             return (
               <div key={quiz._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col justify-between">
@@ -301,10 +304,14 @@ const StudentClassroomView = () => {
                   <h3 className="text-lg font-bold text-gray-900 truncate mb-1" title={quiz.title}>{quiz.title}</h3>
                   <p className="text-xs text-gray-500 line-clamp-2 mb-4">{quiz.questions?.length || 0} Questions &bull; {quiz.description || 'No description'}</p>
 
-                  <div className="space-y-2 mb-4">
-                    <div className={`flex items-center text-sm font-medium ${isPassed ? 'text-red-600' : 'text-gray-600'}`}>
-                      <Calendar className="flex-shrink-0 mr-1.5 h-4 w-4" />
-                      Due: {new Date(quiz.deadline).toLocaleString('en-IN')}
+                  <div className="space-y-1.5 mb-4 text-xs">
+                    <div className="flex items-center text-gray-600">
+                      <Calendar className="flex-shrink-0 mr-1.5 h-3.5 w-3.5 text-purple-600" />
+                      <span className="font-bold mr-1">Starts:</span> {quiz.startTime ? new Date(quiz.startTime).toLocaleString('en-IN') : 'Immediate'}
+                    </div>
+                    <div className={`flex items-center ${hasEnded ? 'text-red-600 font-bold' : 'text-gray-600'}`}>
+                      <Calendar className="flex-shrink-0 mr-1.5 h-3.5 w-3.5 text-rose-500" />
+                      <span className="font-bold mr-1">Ends:</span> {new Date(quizEndTime).toLocaleString('en-IN')}
                     </div>
                   </div>
 
@@ -325,8 +332,12 @@ const StudentClassroomView = () => {
                           Review Answers & Score &rarr;
                         </Link>
                       </div>
-                    ) : isPassed ? (
-                      <button disabled className="w-full flex justify-center items-center px-4 py-2 text-sm font-medium rounded-lg text-gray-500 bg-gray-100 cursor-not-allowed">
+                    ) : !hasStarted ? (
+                      <button disabled className="w-full flex justify-center items-center px-4 py-2.5 text-xs font-bold rounded-xl text-amber-800 bg-amber-50 border border-amber-200 cursor-not-allowed">
+                        Quiz Starts at {new Date(quiz.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </button>
+                    ) : hasEnded ? (
+                      <button disabled className="w-full flex justify-center items-center px-4 py-2.5 text-xs font-bold rounded-xl text-gray-500 bg-gray-100 border border-gray-200 cursor-not-allowed">
                         Quiz Closed (Expired)
                       </button>
                     ) : (
