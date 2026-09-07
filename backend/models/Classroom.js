@@ -5,6 +5,12 @@ const classroomSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  year: {
+    type: String, // e.g., FY, SY, TY
+  },
+  division: {
+    type: String, // e.g., A, B, C
+  },
   teacherId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

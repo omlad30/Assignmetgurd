@@ -203,11 +203,7 @@ const StudentClassroomView = () => {
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {assignment.subject}
                       </span>
-                      {assignment.targetDivision && assignment.targetDivision !== 'ALL' && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
-                          Div {assignment.targetDivision}
-                        </span>
-                      )}
+
                       <h3 className="text-lg font-bold text-gray-900 truncate" title={assignment.title}>{assignment.title}</h3>
                     </div>
                     {submission && <StatusBadge status={submission.status} />}

@@ -10,7 +10,6 @@ exports.createQuiz = async (req, res) => {
       subject,
       description,
       classroomId,
-      targetDivision,
       startTime,
       endTime,
       timeLimitMinutes,
@@ -45,7 +44,6 @@ exports.createQuiz = async (req, res) => {
       description,
       teacherId: req.user._id,
       classroomId,
-      targetDivision: targetDivision || 'ALL',
       startTime: finalStartTime,
       endTime: finalEndTime,
       deadline: finalEndTime,
@@ -76,12 +74,6 @@ exports.getClassroomQuizzes = async (req, res) => {
     const isTeacherOrAdmin = req.user.role === 'teacher' || req.user.role === 'admin';
 
     let quizzes = await Quiz.find({ classroomId }).sort({ createdAt: -1 });
-
-    // Filter by division for student
-    if (req.user.role === 'student') {
-      const studentDivision = req.user.division || 'A';
-      quizzes = quizzes.filter(q => q.targetDivision === 'ALL' || q.targetDivision === studentDivision);
-    }
 
     // Transform quizzes to hide passwords and correct answers for students
     const sanitizedQuizzes = quizzes.map(quiz => {

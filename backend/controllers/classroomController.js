@@ -4,10 +4,12 @@ const User = require('../models/User');
 
 exports.createClassroom = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, year, division } = req.body;
     const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     const classroom = await Classroom.create({
       name,
+      year,
+      division,
       teacherId: req.user._id,
       inviteCode,
     });

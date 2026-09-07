@@ -24,7 +24,7 @@ const ClassroomView = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState(null);
   const [formData, setFormData] = useState({
-    title: '', subject: defaultSubject, description: '', deadline: '', targetDivision: 'ALL'
+    title: '', subject: defaultSubject, description: '', deadline: ''
   });
 
   // Quiz Modal State
@@ -35,7 +35,6 @@ const ClassroomView = () => {
     description: '',
     startTime: '',
     endTime: '',
-    targetDivision: 'ALL',
     isPasswordProtected: false,
     password: '',
     questions: [
@@ -89,8 +88,7 @@ const ClassroomView = () => {
       title: '',
       subject: user?.subject || classroom?.name || '',
       description: '',
-      deadline: '',
-      targetDivision: 'ALL'
+      deadline: ''
     });
     setShowModal(true);
   };
@@ -104,8 +102,7 @@ const ClassroomView = () => {
       title: assignment.title || '',
       subject: assignment.subject || user?.subject || classroom?.name || '',
       description: assignment.description || '',
-      deadline: formattedDeadline,
-      targetDivision: assignment.targetDivision || 'ALL'
+      deadline: formattedDeadline
     });
     setShowModal(true);
   };
@@ -122,7 +119,7 @@ const ClassroomView = () => {
       }
       setShowModal(false);
       setEditingAssignment(null);
-      setFormData({ title: '', subject: user?.subject || classroom?.name || '', description: '', deadline: '', targetDivision: 'ALL' });
+      setFormData({ title: '', subject: user?.subject || classroom?.name || '', description: '', deadline: '' });
       fetchClassroomAndData();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to save assignment');
@@ -150,7 +147,6 @@ const ClassroomView = () => {
       description: '',
       startTime: nowStr,
       endTime: '',
-      targetDivision: 'ALL',
       isPasswordProtected: false,
       password: '',
       questions: [
@@ -267,15 +263,7 @@ const ClassroomView = () => {
     }
   };
 
-  const filteredAssignments = assignments.filter(a => {
-    if (selectedDivTab === 'ALL') return true;
-    return (a.targetDivision || 'ALL') === selectedDivTab;
-  });
 
-  const filteredQuizzes = quizzes.filter(q => {
-    if (selectedDivTab === 'ALL') return true;
-    return (q.targetDivision || 'ALL') === selectedDivTab;
-  });
 
   if (loading) return (
     <div className="flex justify-center items-center h-64">
@@ -343,33 +331,13 @@ const ClassroomView = () => {
           </button>
         </div>
 
-        {/* Division Filter Tabs */}
-        <div className="flex items-center space-x-2 bg-gray-100/80 p-1.5 rounded-2xl border border-gray-200">
-          <button
-            onClick={() => setSelectedDivTab('ALL')}
-            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedDivTab === 'ALL' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
-          >
-            All Divisions
-          </button>
-          <button
-            onClick={() => setSelectedDivTab('A')}
-            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedDivTab === 'A' ? 'bg-white text-primary-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
-          >
-            Div A
-          </button>
-          <button
-            onClick={() => setSelectedDivTab('B')}
-            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedDivTab === 'B' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
-          >
-            Div B
-          </button>
-        </div>
+
       </div>
 
       {/* ASSIGNMENTS VIEW */}
       {activeContentType === 'assignments' && (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredAssignments.map(assignment => {
+          {assignments.map(assignment => {
             const isPassed = new Date(assignment.deadline) < new Date();
 
             return (
@@ -396,19 +364,7 @@ const ClassroomView = () => {
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                       {assignment?.subject || 'No Subject'}
                     </span>
-                    {(!assignment.targetDivision || assignment.targetDivision === 'ALL') ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
-                        All Divisions
-                      </span>
-                    ) : assignment.targetDivision === 'A' ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                        Div A Only
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">
-                        Div B Only
-                      </span>
-                    )}
+
                   </div>
 
                   <h3 className="text-lg font-bold text-gray-900 truncate pr-14 mb-1">{assignment?.title || 'Untitled'}</h3>
@@ -440,9 +396,9 @@ const ClassroomView = () => {
               </div>
             );
           })}
-          {filteredAssignments.length === 0 && (
+          {assignments.length === 0 && (
             <div className="col-span-full py-12 text-center border-2 border-dashed border-gray-300 rounded-xl bg-gray-50">
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No assignments found for {selectedDivTab === 'ALL' ? 'this classroom' : `Division ${selectedDivTab}`}</h3>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No assignments found for this classroom</h3>
               <p className="mt-1 text-sm text-gray-500">Get started by creating a new assignment.</p>
             </div>
           )}
@@ -452,7 +408,7 @@ const ClassroomView = () => {
       {/* QUIZZES VIEW */}
       {activeContentType === 'quizzes' && (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredQuizzes.map(quiz => {
+          {quizzes.map(quiz => {
             const isPassed = new Date(quiz.deadline) < new Date();
 
             return (
@@ -484,15 +440,7 @@ const ClassroomView = () => {
                       </span>
                     )}
 
-                    {(!quiz.targetDivision || quiz.targetDivision === 'ALL') ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
-                        All Divs
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                        Div {quiz.targetDivision}
-                      </span>
-                    )}
+
                   </div>
 
                   <h3 className="text-lg font-bold text-gray-900 truncate pr-10 mb-1">{quiz.title}</h3>
@@ -522,10 +470,10 @@ const ClassroomView = () => {
               </div>
             );
           })}
-          {filteredQuizzes.length === 0 && (
+          {quizzes.length === 0 && (
             <div className="col-span-full py-12 text-center border-2 border-dashed border-gray-300 rounded-xl bg-gray-50">
               <HelpCircle className="mx-auto h-10 w-10 text-gray-400 mb-2" />
-              <h3 className="text-sm font-medium text-gray-900">No quizzes found for {selectedDivTab === 'ALL' ? 'this classroom' : `Division ${selectedDivTab}`}</h3>
+              <h3 className="text-sm font-medium text-gray-900">No quizzes found for this classroom</h3>
               <p className="mt-1 text-sm text-gray-500">Create a password-protected or public quiz for your students.</p>
             </div>
           )}
@@ -555,18 +503,7 @@ const ClassroomView = () => {
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Subject</label>
                   <input required type="text" className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary-500" value={formData.subject} onChange={e => setFormData({ ...formData, subject: e.target.value })} />
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Target Division</label>
-                  <select
-                    className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary-500 bg-white font-medium"
-                    value={formData.targetDivision}
-                    onChange={e => setFormData({ ...formData, targetDivision: e.target.value })}
-                  >
-                    <option value="ALL">All Divisions</option>
-                    <option value="A">Division A Only</option>
-                    <option value="B">Division B Only</option>
-                  </select>
-                </div>
+
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
                   <textarea className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary-500 resize-none" rows="3" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}></textarea>
@@ -618,20 +555,8 @@ const ClassroomView = () => {
                   </div>
                 </div>
 
-                {/* 3 equal size sections in a single row */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Target Division</label>
-                    <select
-                      className="w-full border border-gray-300 rounded-xl px-3 py-2 bg-white font-medium text-sm"
-                      value={quizFormData.targetDivision}
-                      onChange={e => setQuizFormData({ ...quizFormData, targetDivision: e.target.value })}
-                    >
-                      <option value="ALL">All Divisions</option>
-                      <option value="A">Division A Only</option>
-                      <option value="B">Division B Only</option>
-                    </select>
-                  </div>
+                {/* 2 equal size sections in a single row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Start Date & Time</label>
                     <input required type="datetime-local" className="w-full border border-gray-300 rounded-xl px-3 py-2 bg-white font-medium text-sm" value={quizFormData.startTime} onChange={e => setQuizFormData({ ...quizFormData, startTime: e.target.value })} />

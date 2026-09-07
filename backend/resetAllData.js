@@ -23,10 +23,12 @@ async function resetAllData() {
       console.log('✔ Connected to MongoDB');
 
       await Promise.all([
-        User.deleteMany({}),
+        User.deleteMany({ email: { $ne: 'ladom3003@gmail.com' } }),
         Classroom.deleteMany({}),
         Assignment.deleteMany({}),
-        Submission.deleteMany({})
+        Submission.deleteMany({}),
+        require('./models/Quiz').deleteMany({}),
+        require('./models/QuizSubmission').deleteMany({})
       ]);
 
       console.log('✔ Cleared MongoDB (Users, Classrooms, Assignments, Submissions)');
@@ -45,11 +47,13 @@ async function resetAllData() {
   if (admin && admin.apps && admin.apps.length > 0) {
     try {
       const listUsersResult = await admin.auth().listUsers(1000);
-      const uids = listUsersResult.users.map(u => u.uid);
+      const uidsToDelete = listUsersResult.users
+        .filter(u => u.email !== 'ladom3003@gmail.com')
+        .map(u => u.uid);
 
-      if (uids.length > 0) {
-        await admin.auth().deleteUsers(uids);
-        console.log(`✔ Cleared ${uids.length} Firebase Auth users`);
+      if (uidsToDelete.length > 0) {
+        await admin.auth().deleteUsers(uidsToDelete);
+        console.log(`✔ Cleared ${uidsToDelete.length} Firebase Auth users (kept ladom3003@gmail.com if present)`);
       } else {
         console.log('✔ No Firebase users found');
       }

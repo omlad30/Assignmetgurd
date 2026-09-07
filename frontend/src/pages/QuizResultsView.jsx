@@ -67,7 +67,7 @@ const QuizResultsView = () => {
             </div>
             <h1 className="text-3xl font-extrabold text-gray-900">{quiz?.title}</h1>
             <p className="text-xs text-gray-500 font-medium mt-1">
-              Target Division: <span className="font-bold text-gray-800">{quiz?.targetDivision || 'ALL'}</span> &bull; {quiz?.questions?.length || 0} Questions
+              {quiz?.questions?.length || 0} Questions
             </p>
           </div>
         </div>

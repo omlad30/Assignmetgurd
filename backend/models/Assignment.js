@@ -21,11 +21,7 @@ const assignmentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Classroom',
   },
-  targetDivision: {
-    type: String,
-    enum: ['ALL', 'A', 'B'],
-    default: 'ALL',
-  },
+
   deadline: {
     type: Date,
     required: true,

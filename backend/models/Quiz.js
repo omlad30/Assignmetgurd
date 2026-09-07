@@ -41,11 +41,7 @@ const quizSchema = new mongoose.Schema({
     ref: 'Classroom',
     required: true,
   },
-  targetDivision: {
-    type: String,
-    enum: ['ALL', 'A', 'B'],
-    default: 'ALL',
-  },
+
   startTime: {
     type: Date,
     default: Date.now,

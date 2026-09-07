@@ -2,7 +2,7 @@ const Assignment = require('../models/Assignment');
 
 exports.createAssignment = async (req, res) => {
   try {
-    const { title, subject, description, deadline, classroomId, targetDivision } = req.body;
+    const { title, subject, description, deadline, classroomId } = req.body;
 
     const assignment = await Assignment.create({
       title,
@@ -11,7 +11,6 @@ exports.createAssignment = async (req, res) => {
       deadline,
       teacherId: req.user._id,
       classroomId: classroomId || null,
-      targetDivision: targetDivision || 'ALL',
     });
 
     res.status(201).json(assignment);
@@ -57,19 +56,6 @@ exports.getClassroomAssignments = async (req, res) => {
   try {
     let query = { classroomId: req.params.classroomId };
 
-    // If request is from a student, filter assignments meant for ALL or matching student's division
-    if (req.user && req.user.role === 'student') {
-      const studentDiv = (req.user.division || '').toUpperCase();
-      query.$or = [
-        { targetDivision: 'ALL' },
-        { targetDivision: null },
-        { targetDivision: { $exists: false } }
-      ];
-      if (studentDiv) {
-        query.$or.push({ targetDivision: studentDiv });
-      }
-    }
-
     const assignments = await Assignment.find(query)
       .populate('teacherId', 'fullName')
       .sort({ createdAt: -1 });
@@ -90,12 +76,11 @@ exports.updateAssignment = async (req, res) => {
       return res.status(401).json({ message: 'Not authorized to edit this assignment' });
     }
 
-    const { title, subject, description, deadline, targetDivision } = req.body;
+    const { title, subject, description, deadline } = req.body;
     if (title) assignment.title = title;
     if (subject) assignment.subject = subject;
     if (description !== undefined) assignment.description = description;
     if (deadline) assignment.deadline = deadline;
-    if (targetDivision) assignment.targetDivision = targetDivision;
 
     await assignment.save();
     res.json(assignment);

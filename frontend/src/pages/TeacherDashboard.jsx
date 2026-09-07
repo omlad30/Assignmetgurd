@@ -9,6 +9,8 @@ const TeacherDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState('');
+  const [year, setYear] = useState('FY');
+  const [division, setDivision] = useState('A');
   const [copiedCode, setCopiedCode] = useState(null);
 
   const fetchClassrooms = async () => {
@@ -29,10 +31,12 @@ const TeacherDashboard = () => {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/classrooms', { name });
+      await api.post('/classrooms', { name, year, division });
       toast.success('Classroom created successfully');
       setShowModal(false);
       setName('');
+      setYear('FY');
+      setDivision('A');
       fetchClassrooms();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create classroom');
@@ -77,7 +81,14 @@ const TeacherDashboard = () => {
         {classrooms.map(classroom => (
           <div key={classroom._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
             <div className="p-6">
-              <h3 className="text-xl font-bold text-gray-900 truncate mb-4">{classroom.name}</h3>
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-xl font-bold text-gray-900 truncate pr-2">{classroom.name}</h3>
+                {(classroom.year || classroom.division) && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 whitespace-nowrap">
+                    {classroom.year} - Div {classroom.division}
+                  </span>
+                )}
+              </div>
               
               <div className="flex items-center justify-between mb-6 p-3 bg-gray-50 rounded-lg border border-gray-100">
                 <div className="text-sm">
@@ -135,6 +146,25 @@ const TeacherDashboard = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Classroom Name</label>
                   <input required type="text" className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g. CS 101 - Fall 2026" value={name} onChange={e => setName(e.target.value)} />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Year</label>
+                    <select className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary-500 bg-white" value={year} onChange={e => setYear(e.target.value)}>
+                      <option value="FY">FY</option>
+                      <option value="SY">SY</option>
+                      <option value="TY">TY</option>
+                      <option value="BTech">BTech</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Division</label>
+                    <select className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary-500 bg-white" value={division} onChange={e => setDivision(e.target.value)}>
+                      <option value="A">A</option>
+                      <option value="B">B</option>
+                      <option value="C">C</option>
+                    </select>
+                  </div>
                 </div>
               </div>
               <div className="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
