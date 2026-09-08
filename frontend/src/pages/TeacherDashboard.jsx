@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
 import { toast } from 'react-toastify';
-import { PlusCircle, Users, Copy, Check, BookOpen } from 'lucide-react';
+import { PlusCircle, Users, Copy, Check, BookOpen, Trash2, Edit2 } from 'lucide-react';
 
 const TeacherDashboard = () => {
   const [classrooms, setClassrooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingClassroom, setEditingClassroom] = useState(null);
   const [name, setName] = useState('');
   const [year, setYear] = useState('FY');
   const [division, setDivision] = useState('A');
@@ -41,6 +43,42 @@ const TeacherDashboard = () => {
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create classroom');
     }
+  };
+
+  const handleEdit = async (e) => {
+    e.preventDefault();
+    try {
+      await api.put(`/classrooms/${editingClassroom._id}`, { name, year, division });
+      toast.success('Classroom updated successfully');
+      setShowEditModal(false);
+      setEditingClassroom(null);
+      setName('');
+      setYear('FY');
+      setDivision('A');
+      fetchClassrooms();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update classroom');
+    }
+  };
+
+  const handleDelete = async (classroomId) => {
+    if (window.confirm('Are you sure you want to delete this classroom? All related data will be lost.')) {
+      try {
+        await api.delete(`/classrooms/${classroomId}`);
+        toast.success('Classroom deleted successfully');
+        fetchClassrooms();
+      } catch (err) {
+        toast.error(err.response?.data?.message || 'Failed to delete classroom');
+      }
+    }
+  };
+
+  const openEditModal = (classroom) => {
+    setEditingClassroom(classroom);
+    setName(classroom.name);
+    setYear(classroom.year || 'FY');
+    setDivision(classroom.division || 'A');
+    setShowEditModal(true);
   };
 
   const copyToClipboard = (code) => {
@@ -83,11 +121,19 @@ const TeacherDashboard = () => {
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-xl font-bold text-gray-900 truncate pr-2">{classroom.name}</h3>
-                {(classroom.year || classroom.division) && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 whitespace-nowrap">
-                    {classroom.year} - Div {classroom.division}
-                  </span>
-                )}
+                <div className="flex gap-2">
+                  <button onClick={() => openEditModal(classroom)} className="text-gray-400 hover:text-blue-600 transition-colors" title="Edit Classroom">
+                    <Edit2 className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => handleDelete(classroom._id)} className="text-gray-400 hover:text-red-600 transition-colors" title="Delete Classroom">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                  {(classroom.year || classroom.division) && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 whitespace-nowrap">
+                      {classroom.year} - Div {classroom.division}
+                    </span>
+                  )}
+                </div>
               </div>
               
               <div className="flex items-center justify-between mb-6 p-3 bg-gray-50 rounded-lg border border-gray-100">
@@ -168,8 +214,50 @@ const TeacherDashboard = () => {
                 </div>
               </div>
               <div className="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
-                <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50">Cancel</button>
+                <button type="button" onClick={() => {setShowModal(false); setName(''); setYear('FY'); setDivision('A');}} className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50">Cancel</button>
                 <button type="submit" className="px-5 py-2.5 text-sm font-medium text-white bg-primary-600 rounded-xl hover:bg-primary-700">Create</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-gray-900/60 backdrop-blur-sm transition-opacity">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+            <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
+              <h3 className="text-xl font-bold text-gray-900">Edit Classroom</h3>
+            </div>
+            
+            <form onSubmit={handleEdit}>
+              <div className="p-6 space-y-5">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Classroom Name</label>
+                  <input required type="text" className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g. CS 101 - Fall 2026" value={name} onChange={e => setName(e.target.value)} />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Year</label>
+                    <select className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary-500 bg-white" value={year} onChange={e => setYear(e.target.value)}>
+                      <option value="FY">FY</option>
+                      <option value="SY">SY</option>
+                      <option value="TY">TY</option>
+                      <option value="BTech">BTech</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Division</label>
+                    <select className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary-500 bg-white" value={division} onChange={e => setDivision(e.target.value)}>
+                      <option value="A">A</option>
+                      <option value="B">B</option>
+                      <option value="C">C</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+                <button type="button" onClick={() => {setShowEditModal(false); setEditingClassroom(null); setName(''); setYear('FY'); setDivision('A');}} className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50">Cancel</button>
+                <button type="submit" className="px-5 py-2.5 text-sm font-medium text-white bg-primary-600 rounded-xl hover:bg-primary-700">Save</button>
               </div>
             </form>
           </div>
