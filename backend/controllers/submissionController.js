@@ -128,20 +128,9 @@ exports.submitAssignment = async (req, res) => {
     let rejectionReason = '';
 
     if (duplicateResult.isDuplicate) {
-      status = 'rejected';
-      rejectionReason = `Duplicate found. Similarity: ${duplicateResult.similarityScore}%`;
-    }
-
-    // 4. AI Content Check
-    const aiResult = await checkAiContent(text);
-    if (!duplicateResult.isDuplicate && aiResult.ai_probability > 80) {
-      status = 'ai_flagged';
-      rejectionReason = aiResult.reason || 'High AI-generation probability.';
-    }
-
-    // If rejected due to similarity or AI, set to quarantine
-    if (status === 'rejected' || status === 'ai_flagged') {
       status = 'quarantine';
+      rejectionReason = `Duplicate found. Similarity: ${duplicateResult.similarityScore}%`;
+      
       sendEmail({
         email: req.user.email,
         subject: `Submission Under Review: ${assignment.title}`,
@@ -149,7 +138,7 @@ exports.submitAssignment = async (req, res) => {
       });
     }
 
-    // 5. Save submission if accepted
+    // 5. Save submission
     const submission = await Submission.create({
       assignmentId,
       studentId,
@@ -157,9 +146,9 @@ exports.submitAssignment = async (req, res) => {
       extractedText: text,
       similarityScore: duplicateResult.similarityScore,
       matchedWithStudentId: duplicateResult.matchedWith,
-      aiScore: aiResult.ai_probability,
-      aiVerdict: aiResult.verdict,
-      suspiciousSentences: aiResult.suspicious_sentences,
+      aiScore: 0,
+      aiVerdict: 'Pending',
+      suspiciousSentences: [],
       status,
       rejectionReason,
     });
@@ -180,7 +169,7 @@ exports.submitAssignment = async (req, res) => {
     sendEmail({
       email: assignment.teacherId.email,
       subject: status === 'quarantine' ? `Action Required: Flagged Submission for ${assignment.title}` : `New Submission: ${assignment.title}`,
-      message: `Student ${req.user.fullName} has submitted assignment "${assignment.title}".\nStatus: ${status}\nSimilarity: ${duplicateResult.similarityScore}%\nAI Score: ${aiResult.ai_probability}%${status === 'quarantine' ? '\n\nPlease review this submission in your dashboard.' : ''}`,
+      message: `Student ${req.user.fullName} has submitted assignment "${assignment.title}".\nStatus: ${status}\nSimilarity: ${duplicateResult.similarityScore}%${status === 'quarantine' ? '\n\nPlease review this submission in your dashboard.' : ''}`,
     });
 
     // Emit real-time socket event to the teacher's dashboard
@@ -275,6 +264,34 @@ exports.updateSubmissionStatus = async (req, res) => {
       subject: `Update on Flagged Submission: ${submission.assignmentId.title}`,
       message: `Hello ${submission.studentId.fullName},\n\nYour teacher has reviewed your flagged submission for "${submission.assignmentId.title}".\n\nDecision: ${status.toUpperCase()}\n\n${status === 'rejected' ? 'Please submit a new, original attempt if permitted by your teacher.' : 'Your submission has been accepted for grading.'}`,
     });
+
+    res.json(submission);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.analyzeSubmissionAI = async (req, res) => {
+  try {
+    const submission = await Submission.findById(req.params.id);
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' });
+    }
+
+    if (!submission.extractedText) {
+      return res.status(400).json({ message: 'No text available to analyze' });
+    }
+
+    // Run AI check on-demand
+    const aiResult = await checkAiContent(submission.extractedText);
+    
+    // Update submission
+    submission.aiScore = aiResult.ai_probability;
+    submission.aiVerdict = aiResult.verdict;
+    submission.suspiciousSentences = aiResult.suspicious_sentences;
+    
+    // Do not auto-reject based on AI. Just save the score.
+    await submission.save();
 
     res.json(submission);
   } catch (error) {

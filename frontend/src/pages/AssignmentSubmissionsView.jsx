@@ -81,6 +81,18 @@ const AssignmentSubmissionsView = () => {
     }
   };
 
+  const handleAICheck = async (subId) => {
+    const loadingToast = toast.loading('Running Gemini AI Analysis...');
+    try {
+      await api.post(`/submissions/${subId}/ai-check`);
+      toast.update(loadingToast, { render: "AI Analysis Complete", type: "success", isLoading: false, autoClose: 3000 });
+      fetchData();
+    } catch (err) {
+      toast.dismiss();
+      toast.error('Failed to run AI check');
+    }
+  };
+
   const handleExport = async () => {
     try {
       const response = await api.get(`/assignments/${id}/export`, {
@@ -232,9 +244,18 @@ const AssignmentSubmissionsView = () => {
                         <StatusBadge status={submission.status} />
                       </td>
                       <td className="whitespace-nowrap px-3 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${submission.aiScore > 50 ? 'bg-orange-50 border-orange-200 text-orange-700 shadow-sm' : 'bg-emerald-50 border-emerald-200 text-emerald-700 shadow-sm'}`}>
-                          {submission.aiScore}%
-                        </span>
+                        {submission.aiVerdict !== 'Pending' && submission.aiScore !== undefined ? (
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${submission.aiScore > 50 ? 'bg-orange-50 border-orange-200 text-orange-700 shadow-sm' : 'bg-emerald-50 border-emerald-200 text-emerald-700 shadow-sm'}`} title={`Verdict: ${submission.aiVerdict}`}>
+                            {submission.aiScore}%
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleAICheck(submission._id)}
+                            className="text-xs font-medium bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 px-2 py-1 rounded-lg transition-colors shadow-sm"
+                          >
+                            Run AI Check
+                          </button>
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4">
                         <div className="flex flex-col">

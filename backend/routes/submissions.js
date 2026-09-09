@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { submitAssignment, checkDraft, getAssignmentSubmissions, getStudentSubmissions, gradeSubmission, updateSubmissionStatus } = require('../controllers/submissionController');
+const { submitAssignment, checkDraft, getAssignmentSubmissions, getStudentSubmissions, gradeSubmission, updateSubmissionStatus, analyzeSubmissionAI } = require('../controllers/submissionController');
 const { protect, teacherOnly } = require('../middleware/authMiddleware');
 const { upload } = require('../middleware/uploadMiddleware');
 
@@ -10,5 +10,6 @@ router.get('/student', protect, getStudentSubmissions);
 router.get('/assignment/:assignmentId', protect, teacherOnly, getAssignmentSubmissions);
 router.put('/:id/grade', protect, teacherOnly, gradeSubmission);
 router.put('/:id/status', protect, teacherOnly, updateSubmissionStatus);
+router.post('/:id/ai-check', protect, teacherOnly, analyzeSubmissionAI);
 
 module.exports = router;

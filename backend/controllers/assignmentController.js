@@ -223,3 +223,27 @@ exports.exportAssignmentGrades = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.getStudentUpcomingAssignments = async (req, res) => {
+  try {
+    const Classroom = require('../models/Classroom');
+    const Assignment = require('../models/Assignment');
+
+    // Find classrooms the student is enrolled in
+    const classrooms = await Classroom.find({ students: req.user._id }).select('_id');
+    const classroomIds = classrooms.map(c => c._id);
+
+    // Find upcoming assignments in these classrooms
+    const assignments = await Assignment.find({
+      classroomId: { $in: classroomIds },
+      deadline: { $gte: new Date() }
+    })
+      .populate('teacherId', 'fullName')
+      .populate('classroomId', 'name')
+      .sort({ deadline: 1 });
+
+    res.json(assignments);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

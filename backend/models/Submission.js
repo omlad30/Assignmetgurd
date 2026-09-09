@@ -31,7 +31,8 @@ const submissionSchema = new mongoose.Schema({
   },
   aiVerdict: {
     type: String,
-    enum: ['Human', 'AI', 'Mixed'],
+    enum: ['Human', 'AI', 'Mixed', 'Pending'],
+    default: 'Pending',
   },
   suspiciousSentences: {
     type: [String],

@@ -79,7 +79,7 @@ const AssignmentResult = () => {
               <h3 className="text-sm font-medium text-gray-500 mb-4 uppercase tracking-wider">AI Content Analysis</h3>
               <SimilarityMeter score={submission.aiScore || 0} label="AI Probability" />
               <div className="mt-3 text-sm">
-                Verdict: <span className="font-semibold text-gray-900">{submission.aiVerdict || 'N/A'}</span>
+                Verdict: <span className="font-semibold text-gray-900">{submission.aiVerdict === 'Pending' ? 'Not Audited Yet (Teacher On-Demand)' : (submission.aiVerdict || 'N/A')}</span>
               </div>
             </div>
           </div>

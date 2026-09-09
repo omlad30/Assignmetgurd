@@ -1,0 +1,312 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#050811" />
+      <stop offset="50%" stop-color="#0c1322" />
+      <stop offset="100%" stop-color="#080e1a" />
+    </linearGradient>
+
+    <!-- Glowing Button Gradients -->
+    <linearGradient id="btnGemini" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#9333ea" />
+      <stop offset="100%" stop-color="#c084fc" />
+    </linearGradient>
+    <linearGradient id="btnCyan" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+
+    <!-- Glow Filters -->
+    <filter id="glowCyan" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="glowRed" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="glowGreen" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="glowPurple" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <!-- Arrow Markers -->
+    <marker id="arrowCyan" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#38bdf8" />
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444" />
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981" />
+    </marker>
+    <marker id="arrowPurple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#c084fc" />
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1920" height="1080" fill="url(#bgGrad)" />
+
+  <!-- Grid Tech Lines -->
+  <path d="M0 150 H1920 M0 930 H1920 M320 0 V1080 M1600 0 V1080" stroke="#1e293b" stroke-width="1" stroke-dasharray="6 6" opacity="0.3" />
+
+  <!-- HEADER -->
+  <g transform="translate(960, 85)" text-anchor="middle">
+    <!-- Shield Logo Icon -->
+    <path d="M-340 -25 L-320 -35 L-300 -25 V-5 C-300 15 -320 30 -320 30 C-320 30 -340 15 -340 -5 Z" fill="none" stroke="#38bdf8" stroke-width="4" filter="url(#glowCyan)" />
+    <path d="M-324 -8 L-318 -2 L-310 -12" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+
+    <text font-family="Arial, sans-serif" font-weight="900" font-size="44" fill="#38bdf8" letter-spacing="4">
+      ASSIGNMENTGUARD PLATFORM ARCHITECTURE
+    </text>
+    <text y="45" font-family="Arial, sans-serif" font-weight="500" font-size="20" fill="#94a3b8" letter-spacing="2">
+      Streamlined Academic Integrity &amp; Verification Workflow
+    </text>
+  </g>
+
+  <!-- ==================== STEP 1: STUDENT DASHBOARD ==================== -->
+  <g transform="translate(90, 230)">
+    <rect width="360" height="620" rx="22" fill="#0f172a" stroke="#38bdf8" stroke-width="3" filter="url(#glowCyan)" opacity="0.95" />
+    <rect width="360" height="70" rx="22" fill="#1e293b" />
+    
+    <!-- Student Header Icon -->
+    <g transform="translate(30, 20)">
+      <circle cx="15" cy="12" r="10" fill="#38bdf8" />
+      <path d="M0 32 C0 22 10 20 15 20 C20 20 30 22 30 32" fill="#38bdf8" />
+    </g>
+    <text x="195" y="44" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="22" fill="#38bdf8">
+      1. STUDENT DASHBOARD
+    </text>
+
+    <!-- Sub Card 1: Assignment Drafting -->
+    <rect x="25" y="100" width="310" height="190" rx="16" fill="#1e293b" stroke="#334155" stroke-width="2" />
+    <!-- Document Edit Vector Icon -->
+    <g transform="translate(160, 118)">
+      <rect x="-18" y="-20" width="36" height="44" rx="4" fill="none" stroke="#38bdf8" stroke-width="2" />
+      <line x1="-10" y1="-10" x2="10" y2="-10" stroke="#94a3b8" stroke-width="2" />
+      <line x1="-10" y1="-2" x2="10" y2="-2" stroke="#94a3b8" stroke-width="2" />
+      <line x1="-10" y1="6" x2="2" y2="6" stroke="#94a3b8" stroke-width="2" />
+      <path d="M6 14 L16 4 L20 8 L10 18 Z" fill="#38bdf8" />
+    </g>
+    <text x="180" y="185" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="18" fill="#f8fafc">
+      Assignment Drafting
+    </text>
+    <text x="180" y="215" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#94a3b8">
+      Students compose work in
+    </text>
+    <text x="180" y="240" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#94a3b8">
+      an intuitive classroom portal
+    </text>
+
+    <!-- Sub Card 2: Pre-Flight AI Tutor -->
+    <rect x="25" y="320" width="310" height="265" rx="16" fill="#172554" stroke="#60a5fa" stroke-width="2" />
+    <!-- Robot Vector Icon -->
+    <g transform="translate(180, 365)">
+      <circle cx="0" cy="-22" r="4" fill="#60a5fa" />
+      <line x1="0" y1="-18" x2="0" y2="-12" stroke="#60a5fa" stroke-width="2" />
+      <rect x="-20" y="-12" width="40" height="26" rx="6" fill="#1e3a8a" stroke="#60a5fa" stroke-width="2" />
+      <circle cx="-8" cy="1" r="4" fill="#38bdf8" />
+      <circle cx="8" cy="1" r="4" fill="#38bdf8" />
+      <path d="M-6 8 Q0 13 6 8" stroke="#60a5fa" stroke-width="2" fill="none" />
+    </g>
+    <text x="180" y="415" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="19" fill="#93c5fd">
+      Pre-Flight AI Tutor
+    </text>
+    <text x="180" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#cbd5e1">
+      • Voluntary Draft Scan
+    </text>
+    <text x="180" y="478" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#cbd5e1">
+      • Gemini Writing Feedback
+    </text>
+    <text x="180" y="506" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#cbd5e1">
+      • Structure &amp; Tone Guidance
+    </text>
+    <rect x="45" y="530" width="270" height="38" rx="10" fill="url(#btnCyan)" />
+    <text x="180" y="554" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="13" fill="#ffffff">
+      Safe Learning Environment
+    </text>
+  </g>
+
+  <!-- Flow Line 1 -->
+  <path d="M450 540 H560" stroke="#38bdf8" stroke-width="4" marker-end="url(#arrowCyan)" />
+  <text x="505" y="520" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#38bdf8">Submit Work</text>
+
+  <!-- ==================== STEP 2: VERIFICATION ENGINE ==================== -->
+  <g transform="translate(570, 230)">
+    <rect width="380" height="620" rx="22" fill="#0f172a" stroke="#818cf8" stroke-width="3" filter="url(#glowCyan)" opacity="0.95" />
+    <rect width="380" height="70" rx="22" fill="#1e293b" />
+    
+    <!-- Engine Header Icon -->
+    <g transform="translate(35, 35)">
+      <polygon points="0,-14 12,0 0,14 -12,0" fill="#818cf8" />
+    </g>
+    <text x="200" y="44" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="22" fill="#818cf8">
+      2. VERIFICATION ENGINE
+    </text>
+
+    <!-- Ingestion Box -->
+    <rect x="30" y="100" width="320" height="190" rx="16" fill="#1e1b4b" stroke="#6366f1" stroke-width="2" />
+    <!-- Upload Cloud Vector Icon -->
+    <g transform="translate(190, 138)">
+      <path d="M-20 10 C-30 10 -35 0 -25 -10 C-25 -25 -5 -30 5 -18 C15 -25 30 -15 25 0 C35 0 35 10 20 10 Z" fill="none" stroke="#818cf8" stroke-width="2" />
+      <line x1="0" y1="12" x2="0" y2="-6" stroke="#818cf8" stroke-width="3" />
+      <polygon points="-6,-2 0,-10 6,-2" fill="#818cf8" />
+    </g>
+    <text x="190" y="195" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="18" fill="#e0e7ff">
+      Submission Ingestion
+    </text>
+    <text x="190" y="225" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#c7d2fe">
+      Text Normalization &amp; Sanitization
+    </text>
+    <text x="190" y="250" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#c7d2fe">
+      Fast &amp; Decoupled from LLMs
+    </text>
+
+    <!-- Peer Plagiarism Engine Box -->
+    <rect x="30" y="320" width="320" height="265" rx="16" fill="#022c22" stroke="#10b981" stroke-width="2" />
+    <!-- Magnifying Glass Vector Icon -->
+    <g transform="translate(190, 360)">
+      <circle cx="-4" cy="-4" r="14" fill="none" stroke="#10b981" stroke-width="3" />
+      <line x1="6" y1="6" x2="18" y2="18" stroke="#10b981" stroke-width="4" stroke-linecap="round" />
+    </g>
+    <text x="190" y="415" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="19" fill="#6ee7b7">
+      Peer Plagiarism Engine
+    </text>
+    <text x="190" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#a7f3d0">
+      • Cohort Similarity Matching
+    </text>
+    <text x="190" y="478" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#a7f3d0">
+      • Real-Time Duplicate Scan
+    </text>
+    <text x="190" y="506" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#a7f3d0">
+      • 100% Verifiable Accuracy
+    </text>
+    <rect x="50" y="530" width="280" height="38" rx="10" fill="#059669" />
+    <text x="190" y="554" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="13" fill="#ffffff">
+      Classroom Copy Protection
+    </text>
+  </g>
+
+  <!-- Flow Lines to Status Boxes -->
+  <path d="M950 430 H1040 V340 H1070" stroke="#ef4444" stroke-width="4" marker-end="url(#arrowRed)" />
+  <text x="1010" y="325" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#f87171">Duplicate Found</text>
+
+  <path d="M950 430 H1040 V740 H1070" stroke="#10b981" stroke-width="4" marker-end="url(#arrowGreen)" />
+  <text x="1010" y="760" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" fill="#34d399">Unique Content</text>
+
+  <!-- ==================== STEP 3: STATUS ENGINE ==================== -->
+  <!-- Quarantine Box -->
+  <g transform="translate(1080, 230)">
+    <rect width="330" height="240" rx="18" fill="#450a0a" stroke="#ef4444" stroke-width="3" filter="url(#glowRed)" />
+    <!-- Red Lock Vector Icon -->
+    <g transform="translate(165, 45)">
+      <rect x="-14" y="0" width="28" height="22" rx="4" fill="#ef4444" />
+      <path d="M-8 0 V-8 C-8 -14 8 -14 8 -8 V0" fill="none" stroke="#ef4444" stroke-width="3" />
+      <circle cx="0" cy="10" r="3" fill="#ffffff" />
+    </g>
+    <text x="165" y="105" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="20" fill="#fca5a5">
+      QUARANTINE STATUS
+    </text>
+    <text x="165" y="138" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fecaca">
+      Peer Duplicate Flagged
+    </text>
+    <text x="165" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fecaca">
+      Shows Similarity Index %
+    </text>
+    <rect x="40" y="185" width="250" height="38" rx="8" fill="#dc2626" />
+    <text x="165" y="209" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="13" fill="#ffffff">
+      Flagged for Teacher Audit
+    </text>
+  </g>
+
+  <!-- Accepted Box -->
+  <g transform="translate(1080, 610)">
+    <rect width="330" height="240" rx="18" fill="#064e3b" stroke="#10b981" stroke-width="3" filter="url(#glowGreen)" />
+    <!-- Green Check Shield Vector Icon -->
+    <g transform="translate(165, 45)">
+      <path d="M-16 -12 L0 -20 L16 -12 V4 C16 14 0 22 0 22 C0 22 -16 14 -16 4 Z" fill="none" stroke="#10b981" stroke-width="3" />
+      <path d="M-6 0 L-2 4 L8 -6" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" />
+    </g>
+    <text x="165" y="105" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="20" fill="#6ee7b7">
+      ACCEPTED STATUS
+    </text>
+    <text x="165" y="138" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#a7f3d0">
+      Passed Peer Duplicate Check
+    </text>
+    <text x="165" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#a7f3d0">
+      Cleared for Grading
+    </text>
+    <rect x="40" y="185" width="250" height="38" rx="8" fill="#059669" />
+    <text x="165" y="209" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="13" fill="#ffffff">
+      Instant Clearance
+    </text>
+  </g>
+
+  <!-- Flow Lines to Teacher Portal -->
+  <path d="M1410 350 H1460 V540 H1490" stroke="#c084fc" stroke-width="4" marker-end="url(#arrowPurple)" />
+  <path d="M1410 730 H1460 V540 H1490" stroke="#c084fc" stroke-width="4" marker-end="url(#arrowPurple)" />
+
+  <!-- ==================== STEP 4: TEACHER DASHBOARD ==================== -->
+  <g transform="translate(1500, 230)">
+    <rect width="360" height="620" rx="22" fill="#0f172a" stroke="#c084fc" stroke-width="3" filter="url(#glowPurple)" opacity="0.95" />
+    <rect width="360" height="70" rx="22" fill="#1e293b" />
+    
+    <!-- Teacher Header Icon -->
+    <g transform="translate(30, 20)">
+      <circle cx="15" cy="12" r="10" fill="#c084fc" />
+      <path d="M0 32 C0 22 10 20 15 20 C20 20 30 22 30 32" fill="#c084fc" />
+    </g>
+    <text x="195" y="44" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="22" fill="#c084fc">
+      4. TEACHER DASHBOARD
+    </text>
+
+    <!-- Sub Card 1: Submissions Control -->
+    <rect x="25" y="100" width="310" height="190" rx="16" fill="#1e1b4b" stroke="#8b5cf6" stroke-width="2" />
+    <!-- Table/Dashboard Vector Icon -->
+    <g transform="translate(180, 138)">
+      <rect x="-20" y="-15" width="40" height="30" rx="4" fill="none" stroke="#c084fc" stroke-width="2" />
+      <line x1="-20" y1="-5" x2="20" y2="-5" stroke="#c084fc" stroke-width="2" />
+      <line x1="-6" y1="-5" x2="-6" y2="15" stroke="#c084fc" stroke-width="2" />
+    </g>
+    <text x="180" y="185" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="18" fill="#ddd6fe">
+      Submissions Dashboard
+    </text>
+    <text x="180" y="215" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#c4b5fd">
+      View All Submissions
+    </text>
+    <text x="180" y="240" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#c4b5fd">
+      Quarantine &amp; Grading Control
+    </text>
+
+    <!-- Sub Card 2: On-Demand Gemini Audit -->
+    <rect x="25" y="320" width="310" height="265" rx="16" fill="#311b92" stroke="#a855f7" stroke-width="2" />
+    <!-- Sparkles / Wand Vector Icon -->
+    <g transform="translate(180, 360)">
+      <polygon points="0,-16 4,-4 16,0 4,4 0,16 -4,4 -16,0 -4,-4" fill="#f0abfc" />
+      <polygon points="12,-16 14,-10 20,-8 14,-6 12,0 10,-6 4,-8 10,-10" fill="#c084fc" />
+    </g>
+    <text x="180" y="415" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="19" fill="#f0abfc">
+      On-Demand Gemini Audit
+    </text>
+    <text x="180" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#e9d5ff">
+      • Teacher Manual Trigger
+    </text>
+    <text x="180" y="478" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#e9d5ff">
+      • AI Content Score %
+    </text>
+    <text x="180" y="506" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#e9d5ff">
+      • Flagged Suspicious Sentences
+    </text>
+    <rect x="45" y="530" width="270" height="38" rx="10" fill="url(#btnGemini)" filter="url(#glowPurple)" />
+    <text x="180" y="554" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="14" fill="#ffffff">
+      Run AI Audit Button
+    </text>
+  </g>
+
+</svg>

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createAssignment, getTeacherAssignments, getAllAssignments, getAssignmentById, getClassroomAssignments, getAssignmentAnalytics, updateAssignment, deleteAssignment, exportAssignmentGrades } = require('../controllers/assignmentController');
+const { createAssignment, getTeacherAssignments, getAllAssignments, getAssignmentById, getClassroomAssignments, getAssignmentAnalytics, updateAssignment, deleteAssignment, exportAssignmentGrades, getStudentUpcomingAssignments } = require('../controllers/assignmentController');
 const { protect, teacherOnly } = require('../middleware/authMiddleware');
 
 router.route('/')
@@ -8,6 +8,7 @@ router.route('/')
   .get(protect, getAllAssignments);
 
 router.route('/teacher').get(protect, teacherOnly, getTeacherAssignments);
+router.route('/student/upcoming').get(protect, getStudentUpcomingAssignments);
 router.route('/classroom/:classroomId').get(protect, getClassroomAssignments);
 
 router.route('/:id')
