@@ -27,6 +27,9 @@ router.post('/:quizId/submit', authorize('student'), quizController.submitQuiz);
 // Get quiz results/leaderboard (Teacher)
 router.get('/:quizId/results', authorize('teacher', 'admin'), quizController.getQuizResultsForTeacher);
 
+// Export quiz grades to CSV (Teacher)
+router.get('/:quizId/export', authorize('teacher', 'admin'), quizController.exportQuizGrades);
+
 // Delete quiz (Teacher)
 router.delete('/:quizId', authorize('teacher', 'admin'), quizController.deleteQuiz);
 

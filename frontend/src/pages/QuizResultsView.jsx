@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../utils/api';
 import { toast } from 'react-toastify';
-import { Trophy, ArrowLeft, Users, Award, Percent, Lock, Unlock } from 'lucide-react';
+import { Trophy, ArrowLeft, Users, Award, Percent, Lock, Unlock, Download } from 'lucide-react';
 
 const QuizResultsView = () => {
   const { id } = useParams();
   const [quiz, setQuiz] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -24,6 +25,25 @@ const QuizResultsView = () => {
     };
     fetchResults();
   }, [id]);
+
+  const handleExportGrades = async () => {
+    setExporting(true);
+    try {
+      const response = await api.get(`/quizzes/${id}/export`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `quiz_${quiz?.title ? quiz.title.replace(/\s+/g, '_') : id}_grades.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      toast.success('Quiz grades exported successfully!');
+    } catch (err) {
+      toast.error('Failed to export quiz grades.');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   if (loading) return (
     <div className="flex justify-center items-center h-64">
@@ -71,6 +91,15 @@ const QuizResultsView = () => {
             </p>
           </div>
         </div>
+
+        <button
+          onClick={handleExportGrades}
+          disabled={exporting || submissions.length === 0}
+          className="inline-flex items-center justify-center px-5 py-3 border border-purple-200 rounded-2xl shadow-xs text-sm font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 hover:border-purple-300 transition-all focus:outline-none disabled:opacity-50"
+        >
+          <Download className="w-4 h-4 mr-2" />
+          {exporting ? 'Exporting...' : 'Export Quiz Grades (CSV)'}
+        </button>
       </div>
 
       {/* Analytics Cards */}
@@ -124,6 +153,7 @@ const QuizResultsView = () => {
                 <th className="py-3.5 px-6">Division</th>
                 <th className="py-3.5 px-6">Score</th>
                 <th className="py-3.5 px-6">Percentage</th>
+                <th className="py-3.5 px-6">Proctoring Log</th>
                 <th className="py-3.5 px-6">Submitted At</th>
               </tr>
             </thead>
@@ -154,6 +184,21 @@ const QuizResultsView = () => {
                         {sub.percentage}%
                       </span>
                     </td>
+                    <td className="py-4 px-6">
+                      {sub.wasAutoSubmitted ? (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold bg-red-100 text-red-800 border border-red-300">
+                          🚨 Auto-Submitted ({sub.tabSwitches || 3} switches)
+                        </span>
+                      ) : sub.tabSwitches > 0 ? (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                          ⚠️ {sub.tabSwitches} tab {sub.tabSwitches === 1 ? 'switch' : 'switches'}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700">
+                          ✓ Clean (0 switches)
+                        </span>
+                      )}
+                    </td>
                     <td className="py-4 px-6 text-xs text-gray-500">
                       {new Date(sub.submittedAt).toLocaleString('en-IN')}
                     </td>
@@ -162,7 +207,7 @@ const QuizResultsView = () => {
               })}
               {submissions.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="py-12 text-center text-gray-500">
+                  <td colSpan="7" className="py-12 text-center text-gray-500">
                     No students have completed this quiz yet.
                   </td>
                 </tr>

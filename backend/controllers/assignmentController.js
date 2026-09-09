@@ -42,7 +42,8 @@ exports.getAllAssignments = async (req, res) => {
 
 exports.getAssignmentById = async (req, res) => {
   try {
-    const assignment = await Assignment.findById(req.params.id).populate('teacherId', 'fullName');
+    const assignment = await Assignment.findById(req.params.id)
+      .populate('teacherId', 'fullName');
     if (!assignment) {
       return res.status(404).json({ message: 'Assignment not found' });
     }

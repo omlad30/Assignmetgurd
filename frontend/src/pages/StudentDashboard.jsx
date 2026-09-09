@@ -41,12 +41,12 @@ const StudentDashboard = () => {
     
     setJoining(true);
     try {
-      await api.post('/classrooms/join', { 
+      const response = await api.post('/classrooms/join', { 
         inviteCode: inviteCode.trim(),
         rollNo: rollNo.trim(),
         division: division.trim()
       });
-      toast.success('Successfully joined the classroom!');
+      toast.success(response.data.message || 'Successfully requested to join!');
       setShowJoinModal(false);
       setInviteCode('');
       setRollNo('');

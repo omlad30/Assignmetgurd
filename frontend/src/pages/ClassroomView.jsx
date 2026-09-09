@@ -3,7 +3,11 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 import { toast } from 'react-toastify';
-import { PlusCircle, FileText, Calendar, ArrowLeft, Trash, Edit3, HelpCircle, Lock, Unlock, BarChart2, Plus, X } from 'lucide-react';
+import { 
+  PlusCircle, FileText, Calendar, ArrowLeft, Trash, Edit3, 
+  HelpCircle, Lock, Unlock, BarChart2, Plus, X, Users, UserPlus, 
+  Check, XCircle, Mail, Hash, BookOpen, Layers, Search 
+} from 'lucide-react';
 
 const ClassroomView = () => {
   const { id } = useParams();
@@ -16,9 +20,9 @@ const ClassroomView = () => {
   // Default subject from teacher profile or classroom name
   const defaultSubject = user?.subject || classroom?.name || '';
 
-  // Navigation Tabs: 'assignments' | 'quizzes'
+  // Navigation Tabs: 'assignments' | 'quizzes' | 'students' | 'pending'
   const [activeContentType, setActiveContentType] = useState('assignments');
-  const [selectedDivTab, setSelectedDivTab] = useState('ALL');
+  const [studentSearch, setStudentSearch] = useState('');
 
   // Assignment Modal State
   const [showModal, setShowModal] = useState(false);
@@ -86,7 +90,7 @@ const ClassroomView = () => {
     setEditingAssignment(null);
     setFormData({
       title: '',
-      subject: user?.subject || classroom?.name || '',
+      subject: defaultSubject,
       description: '',
       deadline: ''
     });
@@ -100,7 +104,7 @@ const ClassroomView = () => {
 
     setFormData({
       title: assignment.title || '',
-      subject: assignment.subject || user?.subject || classroom?.name || '',
+      subject: assignment.subject || defaultSubject,
       description: assignment.description || '',
       deadline: formattedDeadline
     });
@@ -119,7 +123,7 @@ const ClassroomView = () => {
       }
       setShowModal(false);
       setEditingAssignment(null);
-      setFormData({ title: '', subject: user?.subject || classroom?.name || '', description: '', deadline: '' });
+      setFormData({ title: '', subject: defaultSubject, description: '', deadline: '' });
       fetchClassroomAndData();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to save assignment');
@@ -138,12 +142,34 @@ const ClassroomView = () => {
     }
   };
 
+  const handleApproveStudent = async (studentId) => {
+    try {
+      await api.post(`/classrooms/${id}/approve/${studentId}`);
+      toast.success('Student approved');
+      fetchClassroomAndData();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to approve student');
+    }
+  };
+
+  const handleRejectStudent = async (studentId) => {
+    if (window.confirm('Are you sure you want to reject this request?')) {
+      try {
+        await api.post(`/classrooms/${id}/reject/${studentId}`);
+        toast.success('Student rejected');
+        fetchClassroomAndData();
+      } catch (err) {
+        toast.error(err.response?.data?.message || 'Failed to reject student');
+      }
+    }
+  };
+
   // Quiz Handlers & Builder
   const handleOpenCreateQuiz = () => {
     const nowStr = new Date(Date.now() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
     setQuizFormData({
       title: '',
-      subject: user?.subject || classroom?.name || '',
+      subject: defaultSubject,
       description: '',
       startTime: nowStr,
       endTime: '',
@@ -263,80 +289,152 @@ const ClassroomView = () => {
     }
   };
 
-
-
   if (loading) return (
     <div className="flex justify-center items-center h-64">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
     </div>
   );
 
+  const filteredStudents = (classroom?.students || []).filter(student => {
+    const q = studentSearch.toLowerCase();
+    return (
+      (student.fullName && student.fullName.toLowerCase().includes(q)) ||
+      (student.email && student.email.toLowerCase().includes(q)) ||
+      (student.rollNo && student.rollNo.toLowerCase().includes(q)) ||
+      (student.division && student.division.toLowerCase().includes(q))
+    );
+  });
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header Banner */}
-      <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 mb-8 md:flex md:items-center md:justify-between relative overflow-hidden">
+      <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100 mb-8 md:flex md:items-center md:justify-between relative overflow-hidden">
         <div className="flex-1 min-w-0 relative z-10 flex items-center">
-          <Link to="/teacher" className="mr-4 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition">
-            <ArrowLeft className="h-5 w-5" />
+          <Link to="/teacher" className="mr-4 p-2.5 bg-gray-100 hover:bg-gray-200 rounded-2xl transition">
+            <ArrowLeft className="h-5 w-5 text-gray-700" />
           </Link>
           <div>
-            <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">
+            <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
               {classroom?.name || 'Classroom'}
             </h2>
-            <p className="mt-2 text-sm text-gray-500 font-medium">
-              Invite Code: <span className="font-mono font-bold text-primary-700 bg-primary-50 px-2 py-0.5 rounded">{classroom?.inviteCode || 'N/A'}</span> &bull; Manage assignments & quizzes by Division
+            <p className="mt-1.5 text-xs sm:text-sm text-gray-500 font-medium flex items-center flex-wrap gap-2">
+              <span>Invite Code:</span>
+              <span className="font-mono font-bold text-primary-700 bg-primary-50 border border-primary-200 px-2.5 py-0.5 rounded-lg">
+                {classroom?.inviteCode || 'N/A'}
+              </span>
+              <span className="text-gray-300">•</span>
+              <span>{classroom?.students?.length || 0} Enrolled Students</span>
             </p>
           </div>
         </div>
-        <div className="mt-6 flex gap-3 md:mt-0 md:ml-4 relative z-10">
+        <div className="mt-4 flex gap-3 md:mt-0 md:ml-4 relative z-10">
           <button
             onClick={handleOpenCreate}
-            className="inline-flex items-center px-5 py-2.5 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 shadow-primary-500/30 transition-all focus:outline-none"
+            className="inline-flex items-center px-4 py-2.5 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 shadow-primary-500/20 transition-all focus:outline-none"
           >
-            <PlusCircle className="-ml-1 mr-2 h-5 w-5" />
+            <PlusCircle className="-ml-1 mr-2 h-4 w-4" />
             New Assignment
           </button>
           <button
             onClick={handleOpenCreateQuiz}
-            className="inline-flex items-center px-5 py-2.5 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 shadow-purple-500/30 transition-all focus:outline-none"
+            className="inline-flex items-center px-4 py-2.5 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 shadow-purple-500/20 transition-all focus:outline-none"
           >
-            <HelpCircle className="-ml-1 mr-2 h-5 w-5" />
+            <HelpCircle className="-ml-1 mr-2 h-4 w-4" />
             New Quiz
           </button>
         </div>
       </div>
 
-      {/* Main Content Toggle Tabs (Assignments vs Quizzes) */}
-      <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
-        <div className="flex bg-gray-200/70 p-1.5 rounded-2xl">
-          <button
-            onClick={() => setActiveContentType('assignments')}
-            className={`flex items-center px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${activeContentType === 'assignments'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+      {/* Main Grid with Sidebar + Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        
+        {/* SIDEBAR NAVIGATION */}
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 sticky top-6 space-y-1">
+            <button
+              onClick={() => setActiveContentType('assignments')}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-sm transition-all ${
+                activeContentType === 'assignments'
+                  ? 'bg-primary-50 text-primary-700 border border-primary-200/60 shadow-xs'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`}
-          >
-            <FileText className="h-4 w-4 mr-2 text-primary-600" />
-            Assignments ({assignments.length})
-          </button>
-          <button
-            onClick={() => setActiveContentType('quizzes')}
-            className={`flex items-center px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${activeContentType === 'quizzes'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+            >
+              <div className="flex items-center">
+                <FileText className={`h-4 w-4 mr-3 ${activeContentType === 'assignments' ? 'text-primary-600' : 'text-gray-400'}`} />
+                <span>Assignments</span>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                activeContentType === 'assignments' ? 'bg-primary-200/70 text-primary-800' : 'bg-gray-100 text-gray-600'
+              }`}>
+                {assignments.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveContentType('quizzes')}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-sm transition-all ${
+                activeContentType === 'quizzes'
+                  ? 'bg-purple-50 text-purple-700 border border-purple-200/60 shadow-xs'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`}
-          >
-            <HelpCircle className="h-4 w-4 mr-2 text-purple-600" />
-            Quizzes ({quizzes.length})
-          </button>
+            >
+              <div className="flex items-center">
+                <HelpCircle className={`h-4 w-4 mr-3 ${activeContentType === 'quizzes' ? 'text-purple-600' : 'text-gray-400'}`} />
+                <span>Quizzes</span>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                activeContentType === 'quizzes' ? 'bg-purple-200/70 text-purple-800' : 'bg-gray-100 text-gray-600'
+              }`}>
+                {quizzes.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveContentType('students')}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-sm transition-all ${
+                activeContentType === 'students'
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-xs'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <div className="flex items-center">
+                <Users className={`h-4 w-4 mr-3 ${activeContentType === 'students' ? 'text-emerald-600' : 'text-gray-400'}`} />
+                <span>Students</span>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                activeContentType === 'students' ? 'bg-emerald-200/70 text-emerald-800' : 'bg-gray-100 text-gray-600'
+              }`}>
+                {classroom?.students?.length || 0}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveContentType('pending')}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-sm transition-all ${
+                activeContentType === 'pending'
+                  ? 'bg-blue-50 text-blue-700 border border-blue-200/60 shadow-xs'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <div className="flex items-center">
+                <UserPlus className={`h-4 w-4 mr-3 ${activeContentType === 'pending' ? 'text-blue-600' : 'text-gray-400'}`} />
+                <span>Join Requests</span>
+              </div>
+              {(classroom?.pendingStudents?.length || 0) > 0 && (
+                <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-blue-500 text-white animate-pulse">
+                  {classroom.pendingStudents.length}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
-
-      </div>
+        {/* MAIN VIEW CONTENT AREA */}
+        <div className="lg:col-span-3">
 
       {/* ASSIGNMENTS VIEW */}
       {activeContentType === 'assignments' && (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2">
           {assignments.map(assignment => {
             const isPassed = new Date(assignment.deadline) < new Date();
 
@@ -479,6 +577,163 @@ const ClassroomView = () => {
           )}
         </div>
       )}
+
+      {/* STUDENTS ROSTER VIEW */}
+      {activeContentType === 'students' && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          {/* Top Bar with Search & Total */}
+          <div className="p-5 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Enrolled Students</h3>
+              <p className="text-xs text-gray-500">All students currently admitted to this classroom.</p>
+            </div>
+
+            <div className="relative w-full sm:w-64">
+              <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search by name, roll no, email..."
+                value={studentSearch}
+                onChange={e => setStudentSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-gray-50/50"
+              />
+            </div>
+          </div>
+
+          {/* Students Table */}
+          {filteredStudents.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-100">
+                <thead className="bg-gray-50/60">
+                  <tr>
+                    <th scope="col" className="px-6 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Roll No
+                    </th>
+                    <th scope="col" className="px-6 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Student Name
+                    </th>
+                    <th scope="col" className="px-6 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Email Address
+                    </th>
+                    <th scope="col" className="px-6 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Division
+                    </th>
+                    <th scope="col" className="px-6 py-3.5 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-100 text-sm">
+                  {filteredStudents.map((student, idx) => (
+                    <tr key={student._id || idx} className="hover:bg-gray-50/80 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="font-mono text-xs font-bold px-2.5 py-1 bg-gray-100 text-gray-800 rounded-lg">
+                          {student.rollNo || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-500 text-white flex items-center justify-center font-bold text-xs shadow-xs mr-3">
+                            {student.fullName ? student.fullName.slice(0, 2).toUpperCase() : 'ST'}
+                          </div>
+                          <span className="font-bold text-gray-900">{student.fullName || 'Unnamed Student'}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                        <div className="flex items-center text-xs">
+                          <Mail className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
+                          <span>{student.email}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded bg-purple-50 text-purple-700">
+                          {student.division || classroom?.division || 'A'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          Admitted
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-12 px-4">
+              <Users className="mx-auto h-12 w-12 text-gray-300 mb-3" />
+              <h4 className="text-sm font-bold text-gray-800">
+                {studentSearch ? 'No matching students found' : 'No students enrolled yet'}
+              </h4>
+              <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
+                {studentSearch 
+                  ? 'Try searching with a different name, roll number, or email.' 
+                  : `Share the classroom code (${classroom?.inviteCode}) with your students to admit them.`}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* PENDING REQUESTS VIEW */}
+      {activeContentType === 'pending' && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-6 border-b border-gray-100">
+            <h3 className="text-lg font-bold text-gray-900">Pending Join Requests</h3>
+            <p className="text-xs text-gray-500">Admit or reject student requests to join this classroom.</p>
+          </div>
+
+          <div className="p-6">
+            {classroom?.pendingStudents?.length > 0 ? (
+              <div className="space-y-3">
+                {classroom.pendingStudents.map(student => (
+                  <div key={student._id} className="flex items-center justify-between p-4 border border-gray-100 rounded-xl hover:bg-gray-50/80 transition">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-500 to-indigo-500 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                        {student.fullName ? student.fullName.slice(0, 2).toUpperCase() : 'RQ'}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-gray-900">{student.fullName}</h4>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          Roll: <span className="font-semibold text-gray-700">{student.rollNo || 'N/A'}</span> &bull; 
+                          Div: <span className="font-semibold text-gray-700">{student.division || 'N/A'}</span> &bull; 
+                          Email: <span className="font-semibold text-gray-700">{student.email}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => handleApproveStudent(student._id)} 
+                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5"
+                      >
+                        <Check className="h-4 w-4" />
+                        <span>Admit</span>
+                      </button>
+                      <button 
+                        onClick={() => handleRejectStudent(student._id)} 
+                        className="px-3.5 py-1.5 bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 font-bold text-xs rounded-xl transition flex items-center gap-1.5"
+                      >
+                        <XCircle className="h-4 w-4" />
+                        <span>Reject</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <UserPlus className="mx-auto h-12 w-12 text-gray-300 mb-3" />
+                <h4 className="text-sm font-bold text-gray-800">No pending join requests</h4>
+                <p className="text-xs text-gray-500 mt-1">When students use your invite code, their requests will appear here.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+        </div> {/* End lg:col-span-3 */}
+      </div> {/* End main grid */}
 
       {/* ASSIGNMENT MODAL */}
       {showModal && (

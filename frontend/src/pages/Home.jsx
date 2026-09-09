@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import api from '../utils/api';
 import { toast } from 'react-toastify';
-import { Mail, Lock, LogIn, ShieldCheck, BrainCircuit, GraduationCap } from 'lucide-react';
+import { Mail, Lock, LogIn, ShieldCheck, BrainCircuit, BookOpen, CheckCircle2, Sparkles, Layers, FileCheck } from 'lucide-react';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '../firebase';
 
@@ -59,7 +59,6 @@ const Home = () => {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // AuthContext handles the rest
     } catch (err) {
       toast.error(err.message || 'Login failed');
       setIsLoading(false);
@@ -70,7 +69,6 @@ const Home = () => {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      // AuthContext handles the rest
     } catch (err) {
       toast.error(err.message);
     }
@@ -84,52 +82,63 @@ const Home = () => {
 
       <div className="max-w-6xl w-full flex flex-col lg:flex-row items-center gap-12 relative z-10">
         <div className="flex-1 w-full text-gray-900 px-2 sm:px-4 mt-8 lg:mt-0 text-center lg:text-left">
+          {/* Trust Badge */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-50 border border-primary-200 text-primary-700 text-xs sm:text-sm font-semibold mb-6 shadow-sm">
+            <Sparkles className="w-4 h-4 text-primary-600 animate-pulse" />
+            <span>Next-Gen Academic Integrity & LMS</span>
+          </div>
+
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-4 lg:mb-6">
             The Smartest Way to <br className="hidden lg:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-purple-600">
-              Submit & Grade
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 via-indigo-600 to-purple-600">
+              Teach, Verify & Grade
             </span>
           </h1>
-          <p className="text-xl text-gray-600 mb-10">
-            AssignGuard is not just a plagiarism checker. It's an AI-powered tutor that helps students write better and helps teachers grade faster.
+          <p className="text-lg sm:text-xl text-gray-600 mb-8 leading-relaxed">
+            AssignGuard unifies classroom hierarchies, multi-subject management, and explainable AI integrity checks to elevate learning and eliminate academic dishonesty.
           </p>
 
-          <div className="space-y-6 lg:space-y-8 text-left max-w-md mx-auto lg:mx-0">
-            <div className="flex items-start">
-              <div className="flex-shrink-0 mt-1">
-                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm border border-gray-100">
-                  <BrainCircuit className="text-primary-500 h-6 w-6" />
-                </div>
+          {/* Core Feature Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left max-w-xl mx-auto lg:mx-0 mb-8">
+            <div className="p-4 bg-white/80 backdrop-blur-md rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center mb-3">
+                <Layers className="text-primary-600 h-5 w-5" />
               </div>
-              <div className="ml-5">
-                <h3 className="text-xl font-bold text-gray-900 mb-1">Pre-Flight AI Checks</h3>
-                <p className="text-gray-600">Students run checks to get constructive AI feedback before final submission.</p>
-              </div>
+              <h3 className="font-bold text-gray-900 text-base mb-1">Classroom & Roster Hub</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">Dedicated teacher sidebars with searchable student rosters, roll numbers, and division tracking.</p>
             </div>
 
-            <div className="flex items-start">
-              <div className="flex-shrink-0 mt-1">
-                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm border border-gray-100">
-                  <ShieldCheck className="text-purple-500 h-6 w-6" />
-                </div>
+            <div className="p-4 bg-white/80 backdrop-blur-md rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center mb-3">
+                <ShieldCheck className="text-purple-600 h-5 w-5" />
               </div>
-              <div className="ml-5">
-                <h3 className="text-xl font-bold text-gray-900 mb-1">Peer Duplicate Check</h3>
-                <p className="text-gray-600">Advanced Cosine Similarity to mathematically prove originality.</p>
-              </div>
+              <h3 className="font-bold text-gray-900 text-base mb-1">Admission Control</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">Secure classroom access with instant join requests and 1-click teacher admission approvals.</p>
             </div>
 
-            <div className="flex items-start">
-              <div className="flex-shrink-0 mt-1">
-                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm border border-gray-100">
-                  <GraduationCap className="text-green-500 h-6 w-6" />
-                </div>
+            <div className="p-4 bg-white/80 backdrop-blur-md rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center mb-3">
+                <BrainCircuit className="text-blue-600 h-5 w-5" />
               </div>
-              <div className="ml-5">
-                <h3 className="text-xl font-bold text-gray-900 mb-1">Streamlined Grading</h3>
-                <p className="text-gray-600">Automatic quarantine for suspicious submissions to save teachers time.</p>
-              </div>
+              <h3 className="font-bold text-gray-900 text-base mb-1">Explainable AI & Plagiarism</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">Mathematical Cosine TF-IDF duplicate checks paired with Gemini AI authenticity scoring.</p>
             </div>
+
+            <div className="p-4 bg-white/80 backdrop-blur-md rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center mb-3">
+                <FileCheck className="text-amber-600 h-5 w-5" />
+              </div>
+              <h3 className="font-bold text-gray-900 text-base mb-1">Proctored Quizzes & Anti-Cheat</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">Tab-switch detection with auto-submit penalties, instant grading, and 1-click CSV grade export.</p>
+            </div>
+          </div>
+
+          {/* Quick Technology Chips */}
+          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 text-xs font-semibold text-gray-500">
+            <span className="px-3 py-1 bg-white border border-gray-200 rounded-full shadow-2xs">🛡️ Tab-Switch Proctoring</span>
+            <span className="px-3 py-1 bg-white border border-gray-200 rounded-full shadow-2xs">⚡ Gemini 2.5 Flash</span>
+            <span className="px-3 py-1 bg-white border border-gray-200 rounded-full shadow-2xs">📐 Cosine TF-IDF</span>
+            <span className="px-3 py-1 bg-white border border-gray-200 rounded-full shadow-2xs">📊 CSV Grade Export</span>
           </div>
         </div>
 

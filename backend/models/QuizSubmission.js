@@ -28,6 +28,14 @@ const quizSubmissionSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  tabSwitches: {
+    type: Number,
+    default: 0,
+  },
+  wasAutoSubmitted: {
+    type: Boolean,
+    default: false,
+  },
   submittedAt: {
     type: Date,
     default: Date.now,

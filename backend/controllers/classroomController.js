@@ -29,6 +29,9 @@ exports.joinClassroom = async (req, res) => {
     if (classroom.students.includes(req.user._id)) {
       return res.status(400).json({ message: 'You are already in this classroom.' });
     }
+    if (classroom.pendingStudents.includes(req.user._id)) {
+      return res.status(400).json({ message: 'Your join request is already pending.' });
+    }
 
     // Update student details if provided
     if (rollNo || division) {
@@ -38,9 +41,9 @@ exports.joinClassroom = async (req, res) => {
       await user.save();
     }
 
-    classroom.students.push(req.user._id);
+    classroom.pendingStudents.push(req.user._id);
     await classroom.save();
-    res.json(classroom);
+    res.json({ message: 'Join request sent. Waiting for teacher approval.', classroom });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -66,7 +69,10 @@ exports.getStudentClassrooms = async (req, res) => {
 
 exports.getClassroomById = async (req, res) => {
   try {
-    const classroom = await Classroom.findById(req.params.id).populate('teacherId', 'fullName');
+    const classroom = await Classroom.findById(req.params.id)
+      .populate('teacherId', 'fullName')
+      .populate('students', 'fullName rollNo email division')
+      .populate('pendingStudents', 'fullName rollNo email division');
     if (!classroom) {
       return res.status(404).json({ message: 'Classroom not found' });
     }
@@ -120,6 +126,57 @@ exports.deleteClassroom = async (req, res) => {
     await Assignment.deleteMany({ classroomId: req.params.id });
 
     res.json({ message: 'Classroom removed' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.approveStudent = async (req, res) => {
+  try {
+    const { id, studentId } = req.params;
+    const classroom = await Classroom.findById(id);
+
+    if (!classroom) {
+      return res.status(404).json({ message: 'Classroom not found' });
+    }
+
+    if (classroom.teacherId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to approve students' });
+    }
+
+    classroom.pendingStudents = classroom.pendingStudents.filter(
+      (sId) => sId.toString() !== studentId
+    );
+    if (!classroom.students.includes(studentId)) {
+      classroom.students.push(studentId);
+    }
+
+    await classroom.save();
+    res.json({ message: 'Student approved', classroom });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.rejectStudent = async (req, res) => {
+  try {
+    const { id, studentId } = req.params;
+    const classroom = await Classroom.findById(id);
+
+    if (!classroom) {
+      return res.status(404).json({ message: 'Classroom not found' });
+    }
+
+    if (classroom.teacherId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to reject students' });
+    }
+
+    classroom.pendingStudents = classroom.pendingStudents.filter(
+      (sId) => sId.toString() !== studentId
+    );
+
+    await classroom.save();
+    res.json({ message: 'Student rejected', classroom });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

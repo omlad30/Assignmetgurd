@@ -171,7 +171,7 @@ exports.getQuizById = async (req, res) => {
 exports.submitQuiz = async (req, res) => {
   try {
     const { quizId } = req.params;
-    const { answers, password } = req.body; // answers: [{ questionIndex, selectedOptionIndex }]
+    const { answers, password, tabSwitches, wasAutoSubmitted } = req.body; // answers: [{ questionIndex, selectedOptionIndex }]
 
     const quiz = await Quiz.findById(quizId);
     if (!quiz) {
@@ -226,7 +226,9 @@ exports.submitQuiz = async (req, res) => {
       answers: evaluatedAnswers,
       score,
       totalScore,
-      percentage
+      percentage,
+      tabSwitches: tabSwitches || 0,
+      wasAutoSubmitted: !!wasAutoSubmitted
     });
 
     await submission.save();
@@ -318,5 +320,65 @@ exports.deleteQuiz = async (req, res) => {
   } catch (error) {
     console.error('Error deleting quiz:', error);
     res.status(500).json({ message: 'Failed to delete quiz.' });
+  }
+};
+
+// Export Quiz Grades to CSV (Teacher)
+exports.exportQuizGrades = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+
+    const quiz = await Quiz.findById(quizId);
+    if (!quiz) {
+      return res.status(404).json({ message: 'Quiz not found.' });
+    }
+
+    if (quiz.teacherId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied.' });
+    }
+
+    const submissions = await QuizSubmission.find({ quizId })
+      .populate('studentId', 'fullName email rollNo division')
+      .sort({ score: -1 });
+
+    const headers = [
+      'Rank',
+      'Student Name',
+      'Roll No',
+      'Division',
+      'Email',
+      'Score Obtained',
+      'Total Marks',
+      'Percentage',
+      'Tab Switches',
+      'Auto Submitted (Violation)',
+      'Submission Timestamp'
+    ];
+
+    const rows = submissions.map((sub, idx) => {
+      return [
+        idx + 1,
+        sub.studentId?.fullName || 'Unknown Student',
+        sub.studentId?.rollNo || 'N/A',
+        sub.studentId?.division || 'N/A',
+        sub.studentId?.email || 'N/A',
+        sub.score,
+        sub.totalScore,
+        `${sub.percentage}%`,
+        sub.tabSwitches || 0,
+        sub.wasAutoSubmitted ? 'YES' : 'NO',
+        new Date(sub.submittedAt).toLocaleString('en-IN')
+      ].map(val => `"${String(val).replace(/"/g, '""')}"`).join(',');
+    });
+
+    const csvContent = [headers.join(','), ...rows].join('\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=quiz_${quizId}_grades.csv`);
+
+    res.status(200).send(csvContent);
+  } catch (error) {
+    console.error('Error exporting quiz grades:', error);
+    res.status(500).json({ message: 'Failed to export quiz grades.', error: error.message });
   }
 };

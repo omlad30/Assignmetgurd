@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { toast } from 'react-toastify';
-import { HelpCircle, CheckCircle, XCircle, ArrowLeft, ArrowRight, ShieldCheck, Trophy, Lock, Key } from 'lucide-react';
+import { HelpCircle, CheckCircle, XCircle, ArrowLeft, ArrowRight, ShieldCheck, Trophy, Lock, Key, AlertTriangle, EyeOff } from 'lucide-react';
+
+const MAX_TAB_SWITCHES = 3;
 
 const TakeQuiz = () => {
   const { id } = useParams();
@@ -24,6 +26,21 @@ const TakeQuiz = () => {
   const [userAnswers, setUserAnswers] = useState({}); // { [qIndex]: selectedOptionIndex }
   const [submitting, setSubmitting] = useState(false);
   const [resultSubmission, setResultSubmission] = useState(null);
+
+  // Proctoring / Tab Switch State
+  const [tabSwitchCount, setTabSwitchCount] = useState(0);
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const tabSwitchCountRef = useRef(0);
+  const userAnswersRef = useRef({});
+  const isSubmittingRef = useRef(false);
+
+  useEffect(() => {
+    tabSwitchCountRef.current = tabSwitchCount;
+  }, [tabSwitchCount]);
+
+  useEffect(() => {
+    userAnswersRef.current = userAnswers;
+  }, [userAnswers]);
 
   const fetchQuizDetails = async (passToUse) => {
     setLoading(true);
@@ -52,6 +69,34 @@ const TakeQuiz = () => {
     fetchQuizDetails(passFromUrl);
   }, [id, passFromUrl]);
 
+  // Tab switch / Window blur detector
+  useEffect(() => {
+    if (!quiz || alreadySubmitted || resultSubmission) return;
+
+    const handleVisibilityChange = () => {
+      if (document.hidden && !isSubmittingRef.current) {
+        const nextCount = tabSwitchCountRef.current + 1;
+        setTabSwitchCount(nextCount);
+        tabSwitchCountRef.current = nextCount;
+
+        if (nextCount >= MAX_TAB_SWITCHES) {
+          toast.error(`🚨 Tab switch limit (${MAX_TAB_SWITCHES}) exceeded! Auto-submitting quiz now.`, {
+            autoClose: 5000
+          });
+          handleForceAutoSubmit(nextCount);
+        } else {
+          setShowWarningModal(true);
+          toast.warning(`⚠️ Warning: Tab switch detected! (${nextCount}/${MAX_TAB_SWITCHES})`);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [quiz, alreadySubmitted, resultSubmission]);
+
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
     if (!inputPassword.trim()) {
@@ -69,6 +114,36 @@ const TakeQuiz = () => {
     }));
   };
 
+  const handleForceAutoSubmit = async (finalSwitchCount) => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    setSubmitting(true);
+    setShowWarningModal(false);
+
+    const currentAns = userAnswersRef.current;
+    const formattedAnswers = Object.entries(currentAns).map(([qIdx, optIdx]) => ({
+      questionIndex: parseInt(qIdx),
+      selectedOptionIndex: optIdx
+    }));
+
+    try {
+      const res = await api.post(`/quizzes/${id}/submit`, {
+        answers: formattedAnswers,
+        password: inputPassword || passFromUrl,
+        tabSwitches: finalSwitchCount,
+        wasAutoSubmitted: true
+      });
+      toast.error('Quiz was automatically submitted due to multiple tab switches.');
+      setResultSubmission(res.data.submission);
+      setAlreadySubmitted(true);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to auto-submit quiz.');
+    } finally {
+      setSubmitting(false);
+      isSubmittingRef.current = false;
+    }
+  };
+
   const handleSubmitQuiz = async () => {
     const formattedAnswers = Object.entries(userAnswers).map(([qIdx, optIdx]) => ({
       questionIndex: parseInt(qIdx),
@@ -82,11 +157,14 @@ const TakeQuiz = () => {
       }
     }
 
+    isSubmittingRef.current = true;
     setSubmitting(true);
     try {
       const res = await api.post(`/quizzes/${id}/submit`, {
         answers: formattedAnswers,
-        password: inputPassword || passFromUrl
+        password: inputPassword || passFromUrl,
+        tabSwitches: tabSwitchCount,
+        wasAutoSubmitted: false
       });
       toast.success('Quiz submitted successfully!');
       setResultSubmission(res.data.submission);
@@ -95,6 +173,7 @@ const TakeQuiz = () => {
       toast.error(err.response?.data?.message || 'Failed to submit quiz.');
     } finally {
       setSubmitting(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -151,12 +230,52 @@ const TakeQuiz = () => {
           <h1 className="text-2xl font-extrabold text-gray-900">{quiz.title}</h1>
           <p className="text-xs text-gray-500">{quiz.subject} &bull; {quiz.questions.length} Questions</p>
         </div>
-        {quiz.isPasswordProtected && (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900">
-            <ShieldCheck className="w-3.5 h-3.5 mr-1 text-amber-700" /> Protected Quiz
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {/* Live Anti-Cheat Indicator */}
+          {!activeSubmission && (
+            <div className={`flex items-center px-3 py-1.5 rounded-xl border text-xs font-bold transition-colors ${
+              tabSwitchCount === 0 
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+                : tabSwitchCount === 1 
+                ? 'bg-amber-50 text-amber-800 border-amber-300 animate-pulse' 
+                : 'bg-red-50 text-red-800 border-red-300 animate-bounce'
+            }`}>
+              <EyeOff className="w-3.5 h-3.5 mr-1.5" />
+              <span>Tab Switches: {tabSwitchCount} / {MAX_TAB_SWITCHES}</span>
+            </div>
+          )}
+
+          {quiz.isPasswordProtected && (
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900">
+              <ShieldCheck className="w-3.5 h-3.5 mr-1 text-amber-700" /> Protected Quiz
+            </span>
+          )}
+        </div>
       </div>
+
+      {/* WARNING MODAL FOR TAB SWITCH */}
+      {showWarningModal && !activeSubmission && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-950/70 backdrop-blur-md">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-amber-200 text-center space-y-4 animate-in fade-in zoom-in duration-200">
+            <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
+              <AlertTriangle className="w-9 h-9" />
+            </div>
+            <h3 className="text-2xl font-black text-gray-900 tracking-tight">Warning: Tab Switch Detected!</h3>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              You left the exam screen. This proctored quiz allows a maximum of <strong>{MAX_TAB_SWITCHES} switches</strong> before auto-submitting your test.
+            </p>
+            <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs font-bold text-amber-900">
+              Current Violations: {tabSwitchCount} of {MAX_TAB_SWITCHES} allowed attempts
+            </div>
+            <button
+              onClick={() => setShowWarningModal(false)}
+              className="w-full py-3 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 text-white font-bold rounded-2xl shadow-lg shadow-amber-500/30 transition transform hover:-translate-y-0.5"
+            >
+              I Understand, Continue Quiz
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* COMPLETED / RESULT VIEW */}
       {activeSubmission ? (

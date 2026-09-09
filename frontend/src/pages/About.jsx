@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, BookOpen, Users, Code, Zap, Award } from 'lucide-react';
+import { Shield, BookOpen, BrainCircuit, Cpu, Lock, Layers, Zap, Award, CheckCircle2 } from 'lucide-react';
 
 const About = () => {
   return (
@@ -10,7 +10,7 @@ const About = () => {
       <div className="absolute top-0 -right-4 w-72 h-72 bg-purple-300 dark:bg-purple-900/30 rounded-full mix-blend-multiply dark:mix-blend-lighten filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
       <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 w-96 h-96 bg-pink-300 dark:bg-pink-900/30 rounded-full mix-blend-multiply dark:mix-blend-lighten filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
 
-      <div className="max-w-4xl w-full relative z-10 space-y-12">
+      <div className="max-w-4xl w-full relative z-10 space-y-10">
         
         {/* Header Section */}
         <div className="text-center space-y-4">
@@ -20,79 +20,70 @@ const About = () => {
               <BookOpen className="h-6 w-6 text-white absolute mt-2" strokeWidth={2.5} />
             </div>
           </div>
-          <h1 className="text-5xl font-black text-gray-900 dark:text-white tracking-tighter">
-            About <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-purple-600">AssignGuard</span>
+          <h1 className="text-4xl sm:text-5xl font-black text-gray-900 dark:text-white tracking-tight">
+            About <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 via-indigo-600 to-purple-600">AssignGuard</span>
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto font-medium">
-            Empowering education through AI-driven security, ethical learning, and seamless classroom management.
+          <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto font-medium">
+            Empowering modern education through AI-driven authenticity, institutional security, and ethical learning workflows.
           </p>
         </div>
 
-        {/* Project Info Panel */}
+        {/* Mission & Vision Panel */}
         <div className="glass-panel p-8 sm:p-10 dark:bg-gray-900/60 dark:border-gray-800">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
-            <Award className="h-8 w-8 text-primary-500 mr-3" />
-            The Project
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+            <Award className="h-7 w-7 text-primary-500 mr-3" />
+            Our Vision
           </h2>
-          <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed mb-6">
-            AssignGuard is a next-generation Educational Technology platform. Traditional Learning Management Systems often struggle to verify the originality of student submissions, especially with the rise of AI tools and image-based bypasses.
+          <p className="text-gray-600 dark:text-gray-300 text-base sm:text-lg leading-relaxed mb-6">
+            Traditional Learning Management Systems often struggle to verify the authenticity of student submissions, especially with the surge of generative AI tools and peer-to-peer sharing.
           </p>
-          <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed mb-8">
-            We built this platform to integrate rigorous security checks (like Tesseract OCR and vector similarity matching) natively into the submission flow, ensuring academic integrity without compromising user experience.
+          <p className="text-gray-600 dark:text-gray-300 text-base sm:text-lg leading-relaxed mb-6">
+            <strong>AssignGuard</strong> bridges this gap by integrating transparent peer duplicate checks, Google Gemini-powered linguistic verification, and structured classroom management directly into one unified platform.
           </p>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-8">
-            <div className="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center text-center">
-              <Shield className="h-10 w-10 text-primary-500 mb-4" />
-              <h3 className="font-bold text-gray-900 dark:text-white mb-2">Secure Submissions</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Advanced OCR prevents invisible text and image-based cheating.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+            <div className="p-5 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+              <Shield className="h-8 w-8 text-primary-500 mb-3" />
+              <h3 className="font-bold text-gray-900 dark:text-white mb-1">Mathematical Authenticity</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">TF-IDF Vector Space modeling and Cosine Similarity to detect peer duplicate clusters without human bias.</p>
             </div>
-            <div className="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center text-center">
-              <Zap className="h-10 w-10 text-purple-500 mb-4" />
-              <h3 className="font-bold text-gray-900 dark:text-white mb-2">Real-Time Data</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Teachers get instant notifications and visual plagiarism network graphs.</p>
+            <div className="p-5 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+              <BrainCircuit className="text-purple-500 h-8 w-8 mb-3" />
+              <h3 className="font-bold text-gray-900 dark:text-white mb-1">Explainable AI Scoring</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">Constructive feedback highlighting suspected AI text to foster student growth rather than punitive measures.</p>
             </div>
           </div>
         </div>
 
-        {/* Team CodeCrafter Panel */}
-        <div className="glass-panel p-8 sm:p-10 bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700 shadow-2xl relative overflow-hidden">
-          {/* Decorative code pattern */}
-          <div className="absolute top-0 right-0 opacity-10 pointer-events-none">
-            <Code className="h-64 w-64 text-white transform rotate-12 translate-x-16 -translate-y-16" />
-          </div>
-          
-          <div className="relative z-10">
-            <h2 className="text-3xl font-bold text-white mb-2 flex items-center justify-center sm:justify-start">
-              <Users className="h-8 w-8 text-primary-400 mr-3" />
-              Team <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-purple-400 ml-2">CodeCrafter</span>
-            </h2>
-            <p className="text-gray-300 text-lg mt-4 mb-10 text-center sm:text-left max-w-2xl">
-              We are passionate developers dedicated to crafting elegant code and solving real-world problems. AssignGuard represents our commitment to building software that is not only functional but visually stunning, highly secure, and impactful.
-            </p>
+        {/* Architecture & Core Pillars */}
+        <div className="glass-panel p-8 sm:p-10 dark:bg-gray-900/60 dark:border-gray-800">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+            <Cpu className="h-7 w-7 text-indigo-500 mr-3" />
+            Core Technology Pillars
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="p-5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
+              <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mb-3">
+                <Lock className="text-blue-600 h-5 w-5" />
+              </div>
+              <h4 className="font-bold text-gray-900 dark:text-white text-sm mb-1">Security & SSO</h4>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Google OAuth 2.0, Firebase tokens, and Helmet protection for enterprise-grade integrity.</p>
+            </div>
 
-            {/* Member Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {[
-                { name: 'Om Lad', role: 'Full Stack Developer', initials: 'OL', from: 'from-primary-500', to: 'to-blue-500' },
-                { name: 'Devendra Nimbalkar', role: 'Backend Engineer', initials: 'DN', from: 'from-purple-500', to: 'to-pink-500' },
-                { name: 'Manish Patil', role: 'Frontend Developer', initials: 'MP', from: 'from-green-500', to: 'to-teal-500' },
-              ].map((member) => (
-                <div
-                  key={member.name}
-                  className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 flex flex-col items-center text-center hover:bg-white/15 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-                >
-                  <div className={`h-16 w-16 bg-gradient-to-tr ${member.from} ${member.to} rounded-full flex items-center justify-center shadow-lg mb-4`}>
-                    <span className="text-white font-extrabold text-lg tracking-wide">{member.initials}</span>
-                  </div>
-                  <h3 className="text-white font-bold text-lg leading-tight">{member.name}</h3>
-                  <span className="mt-1 text-xs font-semibold uppercase tracking-widest text-primary-300">{member.role}</span>
-                  <div className="mt-3 flex items-center gap-1">
-                    <Code className="h-3 w-3 text-gray-400" />
-                    <span className="text-gray-400 text-xs">Code Crafter</span>
-                  </div>
-                </div>
-              ))}
+            <div className="p-5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
+              <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center mb-3">
+                <Layers className="text-emerald-600 h-5 w-5" />
+              </div>
+              <h4 className="font-bold text-gray-900 dark:text-white text-sm mb-1">Admission Control</h4>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Classroom join queues with one-click teacher authorization to keep classrooms secure.</p>
+            </div>
+
+            <div className="p-5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
+              <div className="w-10 h-10 bg-amber-50 dark:bg-amber-900/30 rounded-xl flex items-center justify-center mb-3">
+                <Zap className="text-amber-600 h-5 w-5" />
+              </div>
+              <h4 className="font-bold text-gray-900 dark:text-white text-sm mb-1">Real-Time Engine</h4>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Live submission updates, pre-flight self-checking, and interactive quiz assessment.</p>
             </div>
           </div>
         </div>
