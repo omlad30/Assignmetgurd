@@ -59,7 +59,7 @@ const checkDuplicate = (newText, previousSubmissions) => {
   }
 
   return {
-    isDuplicate: highestSimilarity >= 60,
+    isDuplicate: highestSimilarity >= 65,
     similarityScore: Math.round(highestSimilarity),
     matchedWith: matchedStudentId
   };

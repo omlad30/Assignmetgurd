@@ -160,6 +160,16 @@ const AssignmentSubmissionsView = () => {
   };
 
 
+  const getSuggestedGrade = (submission) => {
+    if (submission.grade) return submission.grade;
+    const sim = submission.similarityScore || 0;
+    if (sim >= 90) return '5';
+    if (sim >= 80) return '5';
+    if (sim >= 70) return '6';
+    if (sim >= 65) return '7';
+    return '';
+  };
+
   const filtered = submissions.filter(s =>
     s.studentId?.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.studentId?.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -326,13 +336,13 @@ const AssignmentSubmissionsView = () => {
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-3 py-4">
-                        {submission.status === 'accepted' ? (
+                        {submission.status === 'accepted' || submission.status === 'quarantine' ? (
                           <div className="flex items-center gap-2">
                             <input
                               type="text"
                               id={`grade-${submission._id}`}
                               className="w-16 rounded-xl border border-gray-200 bg-white/80 shadow-inner focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 sm:text-sm p-1.5 text-center transition-all font-medium"
-                              defaultValue={submission.grade || ''}
+                              defaultValue={getSuggestedGrade(submission)}
                               placeholder="A, 90"
                             />
                             <button
