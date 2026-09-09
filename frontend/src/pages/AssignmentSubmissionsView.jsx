@@ -3,9 +3,11 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../utils/api';
 import StatusBadge from '../components/StatusBadge';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
-import { ArrowLeft, Download, ExternalLink, Search, Users, BarChart } from 'lucide-react';
+import { ArrowLeft, Download, ExternalLink, Search, Users, BarChart, FileText } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { io } from 'socket.io-client';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const AssignmentSubmissionsView = () => {
   const { id } = useParams();
@@ -14,6 +16,7 @@ const AssignmentSubmissionsView = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('submissions'); // 'submissions' or 'analytics'
+  const [selectedAIReport, setSelectedAIReport] = useState(null);
 
   const fetchData = async () => {
     try {
@@ -93,6 +96,51 @@ const AssignmentSubmissionsView = () => {
     }
   };
 
+  const handleExportPDF = () => {
+    try {
+      const doc = new jsPDF();
+      
+      // Title
+      doc.setFontSize(20);
+      doc.text("Integrity Audit Report", 14, 22);
+      
+      doc.setFontSize(11);
+      doc.setTextColor(100);
+      doc.text(`Assignment: ${assignment?.title || 'N/A'}`, 14, 32);
+      doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 38);
+
+      const tableColumn = ["Student", "Email", "Status", "AI Score", "Similarity", "Grade"];
+      const tableRows = [];
+
+      submissions.forEach(sub => {
+        const studentData = [
+          sub.studentId?.fullName || "N/A",
+          sub.studentId?.email || "N/A",
+          sub.status.toUpperCase(),
+          sub.aiScore !== undefined ? `${sub.aiScore}%` : "N/A",
+          `${sub.similarityScore}%`,
+          sub.grade || "N/A"
+        ];
+        tableRows.push(studentData);
+      });
+
+      doc.autoTable({
+        head: [tableColumn],
+        body: tableRows,
+        startY: 45,
+        theme: 'grid',
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [79, 70, 229] } // primary-600 color approx
+      });
+
+      doc.save(`${assignment?.title || 'assignment'}_Integrity_Report.pdf`);
+      toast.success('PDF Export successful');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to export PDF report');
+    }
+  };
+
   const handleExport = async () => {
     try {
       const response = await api.get(`/assignments/${id}/export`, {
@@ -153,12 +201,20 @@ const AssignmentSubmissionsView = () => {
               />
             </div>
             <button
+              onClick={handleExportPDF}
+              className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 px-4 py-3 rounded-2xl border border-white/50 shadow-sm transition-all hover:shadow hover:-translate-y-0.5 backdrop-blur-md"
+              title="Export Integrity Audit Report as PDF"
+            >
+              <FileText className="h-5 w-5 text-primary-600" />
+              <span className="font-medium">Export PDF</span>
+            </button>
+            <button
               onClick={handleExport}
               className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 px-4 py-3 rounded-2xl border border-white/50 shadow-sm transition-all hover:shadow hover:-translate-y-0.5 backdrop-blur-md"
               title="Export Grades as CSV"
             >
               <Download className="h-5 w-5 text-primary-600" />
-              <span className="font-medium">Export</span>
+              <span className="font-medium">Export CSV</span>
             </button>
           </div>
         )}
@@ -245,9 +301,13 @@ const AssignmentSubmissionsView = () => {
                       </td>
                       <td className="whitespace-nowrap px-3 py-4">
                         {submission.aiVerdict !== 'Pending' && submission.aiScore !== undefined ? (
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${submission.aiScore > 50 ? 'bg-orange-50 border-orange-200 text-orange-700 shadow-sm' : 'bg-emerald-50 border-emerald-200 text-emerald-700 shadow-sm'}`} title={`Verdict: ${submission.aiVerdict}`}>
-                            {submission.aiScore}%
-                          </span>
+                          <button
+                            onClick={() => setSelectedAIReport(submission)}
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border transition-colors hover:shadow-md cursor-pointer ${submission.aiScore > 50 ? 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100' : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'}`} 
+                            title={`Verdict: ${submission.aiVerdict} - Click for details`}
+                          >
+                            {submission.aiScore}% <ExternalLink className="h-3 w-3 ml-1" />
+                          </button>
                         ) : (
                           <button
                             onClick={() => handleAICheck(submission._id)}
@@ -326,6 +386,70 @@ const AssignmentSubmissionsView = () => {
           </div>
         )}
       </div>
+      {/* AI Verification Report Modal */}
+      {selectedAIReport && (
+        <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={() => setSelectedAIReport(null)}></div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-gray-100">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className={`mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full sm:mx-0 sm:h-10 sm:w-10 ${selectedAIReport.aiScore > 50 ? 'bg-orange-100 text-orange-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                    <BarChart className="h-6 w-6" aria-hidden="true" />
+                  </div>
+                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                    <h3 className="text-xl leading-6 font-bold text-gray-900" id="modal-title">
+                      AI Verification Assistant Report
+                    </h3>
+                    <div className="mt-2 text-sm text-gray-500">
+                      Student: <span className="font-semibold text-gray-800">{selectedAIReport.studentId?.fullName}</span>
+                    </div>
+                    <div className="mt-4 bg-gray-50 rounded-xl p-4 border border-gray-100">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">AI Probability</p>
+                          <p className={`text-2xl font-bold ${selectedAIReport.aiScore > 50 ? 'text-orange-600' : 'text-emerald-600'}`}>{selectedAIReport.aiScore}%</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">AI Verdict</p>
+                          <p className="text-lg font-medium text-gray-900">{selectedAIReport.aiVerdict}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-6">
+                      <h4 className="text-sm font-bold text-gray-900 mb-3 border-b pb-2">Suspicious Sentences (Flagged as AI-Generated)</h4>
+                      {selectedAIReport.suspiciousSentences && selectedAIReport.suspiciousSentences.length > 0 ? (
+                        <ul className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                          {selectedAIReport.suspiciousSentences.map((sentence, idx) => (
+                            <li key={idx} className="bg-orange-50/50 border border-orange-100 rounded-lg p-3 text-sm text-gray-800">
+                              <span className="font-medium text-orange-600 mr-2">Highlight {idx + 1}:</span>
+                              "{sentence}"
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-sm text-gray-500 italic bg-gray-50 p-4 rounded-lg">No specifically flagged sentences. The score reflects the overall structure and perplexity of the document.</p>
+                      )}
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-100">
+                <button
+                  type="button"
+                  className="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 bg-gray-900 text-base font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 sm:ml-3 sm:w-auto sm:text-sm transition-colors"
+                  onClick={() => setSelectedAIReport(null)}
+                >
+                  Close Report
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

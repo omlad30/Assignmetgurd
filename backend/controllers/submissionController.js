@@ -1,6 +1,7 @@
 const Submission = require('../models/Submission');
 const Assignment = require('../models/Assignment');
 const User = require('../models/User');
+const DraftAttempt = require('../models/DraftAttempt');
 const extractText = require('../utils/extractText');
 const { checkDuplicate } = require('../utils/duplicateCheck');
 const { checkAiContent, checkAiContentDraft } = require('../utils/geminiCheck');
@@ -10,7 +11,14 @@ const cloudinary = require('../config/cloudinary');
 exports.checkDraft = async (req, res) => {
   try {
     const { assignmentId } = req.body;
+    const studentId = req.user._id;
     
+    // Check Draft Attempts Limit
+    let attempt = await DraftAttempt.findOne({ studentId, assignmentId });
+    if (attempt && attempt.count >= 2) {
+      return res.status(403).json({ message: 'Draft check limit reached. You can only use the Pre-Flight Check 2 times per assignment.' });
+    }
+
     if (!req.file) {
       return res.status(400).json({ message: 'Please upload a PDF, DOCX, or Image file' });
     }
@@ -46,6 +54,14 @@ exports.checkDraft = async (req, res) => {
       feedback: aiResult.feedback,
       message: 'Pre-Flight check completed successfully. This attempt was not saved.'
     });
+
+    // Increment Attempt count
+    if (attempt) {
+      attempt.count += 1;
+      await attempt.save();
+    } else {
+      await DraftAttempt.create({ studentId, assignmentId, count: 1 });
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -79,19 +95,7 @@ exports.submitAssignment = async (req, res) => {
       assignment.totalSubmissions = Math.max(0, assignment.totalSubmissions - 1);
     }
 
-    // 1. Extract text from file buffer
-    let text = '';
-    try {
-      text = await extractText(req.file.buffer, req.file.mimetype);
-    } catch (err) {
-      return res.status(400).json({ message: err.message });
-    }
-
-    if (!text || text.trim().length === 0) {
-      return res.status(400).json({ message: 'Could not extract text or file is empty.' });
-    }
-
-    // 2. Upload file to Cloudinary
+    // 1. Upload file to Cloudinary
     let resourceType = 'auto';
     const ext = req.file.originalname.split('.').pop().toLowerCase();
     
@@ -120,67 +124,101 @@ exports.submitAssignment = async (req, res) => {
       bufferStream.pipe(stream);
     });
 
-    // 3. Duplicate check
-    const previousSubmissions = await Submission.find({ assignmentId });
-    const duplicateResult = checkDuplicate(text, previousSubmissions);
-
-    let status = 'accepted';
-    let rejectionReason = '';
-
-    if (duplicateResult.isDuplicate) {
-      status = 'quarantine';
-      rejectionReason = `Duplicate found. Similarity: ${duplicateResult.similarityScore}%`;
-      
-      sendEmail({
-        email: req.user.email,
-        subject: `Submission Under Review: ${assignment.title}`,
-        message: `Hello,\n\nYour submission for "${assignment.title}" has been flagged and placed under review by your teacher.\nReason: ${rejectionReason}\n\nPlease wait for your teacher's decision.`,
-      });
-    }
-
-    // 5. Save submission
+    // 2. Save submission immediately as "processing"
     const submission = await Submission.create({
       assignmentId,
       studentId,
       fileUrl,
-      extractedText: text,
-      similarityScore: duplicateResult.similarityScore,
-      matchedWithStudentId: duplicateResult.matchedWith,
+      extractedText: '',
+      similarityScore: 0,
       aiScore: 0,
       aiVerdict: 'Pending',
       suspiciousSentences: [],
-      status,
-      rejectionReason,
+      status: 'processing',
+      rejectionReason: '',
     });
 
     // Update assignment submission count
     assignment.totalSubmissions += 1;
     await assignment.save();
 
-    // 6. Emails for successful or quarantined submission
-    if (status === 'accepted') {
-      sendEmail({
-        email: req.user.email,
-        subject: `Submission Successful: ${assignment.title}`,
-        message: `Your assignment "${assignment.title}" has been successfully received and passed all automated checks.`,
-      });
-    }
-
-    sendEmail({
-      email: assignment.teacherId.email,
-      subject: status === 'quarantine' ? `Action Required: Flagged Submission for ${assignment.title}` : `New Submission: ${assignment.title}`,
-      message: `Student ${req.user.fullName} has submitted assignment "${assignment.title}".\nStatus: ${status}\nSimilarity: ${duplicateResult.similarityScore}%${status === 'quarantine' ? '\n\nPlease review this submission in your dashboard.' : ''}`,
-    });
-
-    // Emit real-time socket event to the teacher's dashboard
-    if (req.io) {
-      const populatedSubmission = await Submission.findById(submission._id)
-        .populate('studentId', 'fullName email')
-        .populate('matchedWithStudentId', 'fullName');
-      req.io.to(assignmentId.toString()).emit('new_submission', populatedSubmission);
-    }
-
+    // 3. Return response immediately to unblock client
     res.status(201).json(submission);
+
+    // 4. Run Heavy Extraction and Plagiarism checks asynchronously in background
+    setImmediate(async () => {
+      try {
+        let text = '';
+        try {
+          text = await extractText(req.file.buffer, req.file.mimetype);
+        } catch (err) {
+          console.error("Background text extraction failed:", err);
+          submission.status = 'rejected';
+          submission.rejectionReason = err.message || 'Text extraction failed.';
+          await submission.save();
+          return; // Stop processing
+        }
+
+        if (!text || text.trim().length === 0) {
+          submission.status = 'rejected';
+          submission.rejectionReason = 'Could not extract text or file is empty.';
+          await submission.save();
+          return;
+        }
+
+        // 5. Duplicate check
+        const previousSubmissions = await Submission.find({ assignmentId, _id: { $ne: submission._id } });
+        const duplicateResult = checkDuplicate(text, previousSubmissions);
+
+        let status = 'accepted';
+        let rejectionReason = '';
+
+        if (duplicateResult.isDuplicate) {
+          status = 'quarantine';
+          rejectionReason = `Duplicate found. Similarity: ${duplicateResult.similarityScore}%`;
+          
+          sendEmail({
+            email: req.user.email,
+            subject: `Submission Under Review: ${assignment.title}`,
+            message: `Hello,\n\nYour submission for "${assignment.title}" has been flagged and placed under review by your teacher.\nReason: ${rejectionReason}\n\nPlease wait for your teacher's decision.`,
+          });
+        }
+
+        // Update submission with final data
+        submission.extractedText = text;
+        submission.similarityScore = duplicateResult.similarityScore;
+        submission.matchedWithStudentId = duplicateResult.matchedWith;
+        submission.status = status;
+        submission.rejectionReason = rejectionReason;
+        await submission.save();
+
+        // 6. Emails for successful or quarantined submission
+        if (status === 'accepted') {
+          sendEmail({
+            email: req.user.email,
+            subject: `Submission Successful: ${assignment.title}`,
+            message: `Your assignment "${assignment.title}" has been successfully received and passed all automated checks.`,
+          });
+        }
+
+        sendEmail({
+          email: assignment.teacherId.email,
+          subject: status === 'quarantine' ? `Action Required: Flagged Submission for ${assignment.title}` : `New Submission: ${assignment.title}`,
+          message: `Student ${req.user.fullName} has submitted assignment "${assignment.title}".\nStatus: ${status}\nSimilarity: ${duplicateResult.similarityScore}%${status === 'quarantine' ? '\n\nPlease review this submission in your dashboard.' : ''}`,
+        });
+
+        // Emit real-time socket event to the teacher's dashboard
+        if (req.io) {
+          const populatedSubmission = await Submission.findById(submission._id)
+            .populate('studentId', 'fullName email')
+            .populate('matchedWithStudentId', 'fullName');
+          req.io.to(assignmentId.toString()).emit('new_submission', populatedSubmission);
+        }
+
+      } catch (backgroundError) {
+        console.error("Background processing error:", backgroundError);
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

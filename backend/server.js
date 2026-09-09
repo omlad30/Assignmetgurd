@@ -111,6 +111,21 @@ app.use('/api/classrooms', classroomRoutes);
 app.use('/api/quizzes', quizRoutes);
 app.use('/api/admin', require('./routes/admin'));
 
+// Keep-alive DB warm-up endpoint
+app.get('/api/ping', async (req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState === 1) {
+      await mongoose.connection.db.admin().ping();
+      res.status(200).json({ status: 'ok', db: 'connected' });
+    } else {
+      res.status(200).json({ status: 'ok', db: 'disconnected' });
+    }
+  } catch (err) {
+    res.status(500).json({ status: 'error', message: err.message });
+  }
+});
+
 // Root Endpoint
 app.get('/', (req, res) => {
   res.send('AssignGuard API is running');
