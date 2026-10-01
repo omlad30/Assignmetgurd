@@ -17,6 +17,7 @@ const assignmentRoutes = require('./routes/assignments');
 const submissionRoutes = require('./routes/submissions');
 const classroomRoutes = require('./routes/classrooms');
 const quizRoutes = require('./routes/quizzes');
+const materialRoutes = require('./routes/materials');
 
 // Initialize app
 const http = require('http');
@@ -109,6 +110,7 @@ app.use('/api/assignments', assignmentRoutes);
 app.use('/api/submissions', submissionRoutes);
 app.use('/api/classrooms', classroomRoutes);
 app.use('/api/quizzes', quizRoutes);
+app.use('/api/materials', materialRoutes);
 app.use('/api/admin', require('./routes/admin'));
 
 // Keep-alive DB warm-up endpoint

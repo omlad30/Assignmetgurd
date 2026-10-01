@@ -19,6 +19,7 @@ To test the live application without creating a new account, you can securely lo
 - **AI Generation Check**: Leverages Google Gemini 2.5 Flash to automatically detect LLM-written assignments.
 - **Secure Authentication**: One-click Google Sign in using Passport.js and Firebase.
 - **File Parsing**: Extracts text directly from DOCX (`mammoth`) and PDF (`pdf-parse`) uploads.
+- **Course Materials**: Upload, manage, and share study materials (PDFs, docs, images, videos) directly within classrooms.
 - **Cloud Delivery**: Files are stored safely and efficiently in Cloudinary.
 - **Email Notifications**: Automatic alerts to teachers and students on submission via Nodemailer.
 

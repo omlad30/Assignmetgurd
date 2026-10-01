@@ -1,6 +1,6 @@
 const multer = require('multer');
 
-// Store file in memory to allow text extraction before uploading to Cloudinary
+// Store file in memory to allow processing before uploading to Cloudinary
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
@@ -16,10 +16,34 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+const materialFileFilter = (req, file, cb) => {
+  const allowedMimeTypes = [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/vnd.ms-powerpoint',
+    'text/plain'
+  ];
+
+  if (allowedMimeTypes.includes(file.mimetype) || file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only PDF, DOCX, PPT, TXT, and Image files are supported for study materials!'), false);
+  }
+};
+
 const upload = multer({ 
   storage, 
   fileFilter,
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
-module.exports = { upload };
+const materialUpload = multer({
+  storage,
+  fileFilter: materialFileFilter,
+  limits: { fileSize: 25 * 1024 * 1024 } // 25MB limit
+});
+
+module.exports = { upload, materialUpload };
+

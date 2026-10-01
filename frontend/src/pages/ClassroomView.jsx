@@ -6,7 +6,8 @@ import { toast } from 'react-toastify';
 import { 
   PlusCircle, FileText, Calendar, ArrowLeft, Trash, Edit3, 
   HelpCircle, Lock, Unlock, BarChart2, Plus, X, Users, UserPlus, 
-  Check, XCircle, Mail, Hash, BookOpen, Layers, Search 
+  Check, XCircle, Mail, Hash, BookOpen, Layers, Search,
+  UploadCloud, Download, File, FolderPlus, Eye, Clock
 } from 'lucide-react';
 
 const ClassroomView = () => {
@@ -14,15 +15,28 @@ const ClassroomView = () => {
   const { user } = useContext(AuthContext);
   const [assignments, setAssignments] = useState([]);
   const [quizzes, setQuizzes] = useState([]);
+  const [materials, setMaterials] = useState([]);
   const [classroom, setClassroom] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Default subject from teacher profile or classroom name
   const defaultSubject = user?.subject || classroom?.name || '';
 
-  // Navigation Tabs: 'assignments' | 'quizzes' | 'students' | 'pending'
+  // Navigation Tabs: 'assignments' | 'quizzes' | 'materials' | 'students' | 'pending'
   const [activeContentType, setActiveContentType] = useState('assignments');
   const [studentSearch, setStudentSearch] = useState('');
+
+  // Material State
+  const [showMaterialModal, setShowMaterialModal] = useState(false);
+  const [materialUploading, setMaterialUploading] = useState(false);
+  const [materialFormData, setMaterialFormData] = useState({
+    title: '',
+    subject: defaultSubject,
+    description: ''
+  });
+  const [materialFile, setMaterialFile] = useState(null);
+  const [materialSubjectFilter, setMaterialSubjectFilter] = useState('All');
+  const [materialSearch, setMaterialSearch] = useState('');
 
   // Assignment Modal State
   const [showModal, setShowModal] = useState(false);
@@ -56,6 +70,7 @@ const ClassroomView = () => {
     if (defaultSubject) {
       setFormData(prev => ({ ...prev, subject: prev.subject || defaultSubject }));
       setQuizFormData(prev => ({ ...prev, subject: prev.subject || defaultSubject }));
+      setMaterialFormData(prev => ({ ...prev, subject: prev.subject || defaultSubject }));
     }
   }, [defaultSubject]);
 
@@ -74,10 +89,102 @@ const ClassroomView = () => {
       } catch (e) {
         console.error('Error fetching quizzes:', e);
       }
+
+      try {
+        const matRes = await api.get(`/materials/classroom/${id}`);
+        setMaterials(matRes.data || []);
+      } catch (e) {
+        console.error('Error fetching materials:', e);
+      }
     } catch (err) {
       toast.error('Failed to load classroom details');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const formatFileSize = (bytes) => {
+    if (!bytes || bytes === 0) return '0 KB';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+  const getFileBadge = (fileType) => {
+    const type = (fileType || '').toLowerCase();
+    if (type === 'pdf') {
+      return { bg: 'bg-rose-50 text-rose-700 border-rose-200', label: 'PDF' };
+    }
+    if (['doc', 'docx'].includes(type)) {
+      return { bg: 'bg-blue-50 text-blue-700 border-blue-200', label: 'DOCX' };
+    }
+    if (['ppt', 'pptx'].includes(type)) {
+      return { bg: 'bg-amber-50 text-amber-700 border-amber-200', label: 'SLIDES' };
+    }
+    if (type === 'txt') {
+      return { bg: 'bg-gray-50 text-gray-700 border-gray-200', label: 'TEXT' };
+    }
+    if (type === 'image') {
+      return { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: 'IMAGE' };
+    }
+    return { bg: 'bg-indigo-50 text-indigo-700 border-indigo-200', label: 'FILE' };
+  };
+
+  const handleOpenUploadMaterial = () => {
+    setMaterialFormData({
+      title: '',
+      subject: defaultSubject,
+      description: ''
+    });
+    setMaterialFile(null);
+    setShowMaterialModal(true);
+  };
+
+  const handleUploadMaterialSubmit = async (e) => {
+    e.preventDefault();
+    if (!materialFormData.title.trim() || !materialFormData.subject.trim()) {
+      toast.error('Title and Subject are required');
+      return;
+    }
+    if (!materialFile) {
+      toast.error('Please select a file to upload');
+      return;
+    }
+
+    setMaterialUploading(true);
+    const data = new FormData();
+    data.append('title', materialFormData.title.trim());
+    data.append('subject', materialFormData.subject.trim());
+    data.append('description', materialFormData.description.trim());
+    data.append('classroomId', id);
+    data.append('file', materialFile);
+
+    try {
+      const res = await api.post('/materials', data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      toast.success('Study material uploaded successfully!');
+      setMaterials(prev => [res.data, ...prev]);
+      setShowMaterialModal(false);
+      setMaterialFile(null);
+      setMaterialFormData({ title: '', subject: defaultSubject, description: '' });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to upload material');
+    } finally {
+      setMaterialUploading(false);
+    }
+  };
+
+  const handleDeleteMaterial = async (materialId) => {
+    if (window.confirm('Are you sure you want to delete this study material? Students will no longer have access to it.')) {
+      try {
+        await api.delete(`/materials/${materialId}`);
+        toast.success('Study material deleted');
+        setMaterials(prev => prev.filter(m => m._id !== materialId));
+      } catch (err) {
+        toast.error(err.response?.data?.message || 'Failed to delete material');
+      }
     }
   };
 
@@ -327,7 +434,7 @@ const ClassroomView = () => {
             </p>
           </div>
         </div>
-        <div className="mt-4 flex gap-3 md:mt-0 md:ml-4 relative z-10">
+        <div className="mt-4 flex flex-wrap gap-3 md:mt-0 md:ml-4 relative z-10">
           <button
             onClick={handleOpenCreate}
             className="inline-flex items-center px-4 py-2.5 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 shadow-primary-500/20 transition-all focus:outline-none"
@@ -341,6 +448,13 @@ const ClassroomView = () => {
           >
             <HelpCircle className="-ml-1 mr-2 h-4 w-4" />
             New Quiz
+          </button>
+          <button
+            onClick={handleOpenUploadMaterial}
+            className="inline-flex items-center px-4 py-2.5 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-amber-600 hover:bg-amber-700 shadow-amber-500/20 transition-all focus:outline-none"
+          >
+            <FolderPlus className="-ml-1 mr-2 h-4 w-4" />
+            Upload Material
           </button>
         </div>
       </div>
@@ -386,6 +500,25 @@ const ClassroomView = () => {
                 activeContentType === 'quizzes' ? 'bg-purple-200/70 text-purple-800' : 'bg-gray-100 text-gray-600'
               }`}>
                 {quizzes.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveContentType('materials')}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-sm transition-all ${
+                activeContentType === 'materials'
+                  ? 'bg-amber-50 text-amber-700 border border-amber-200/60 shadow-xs'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <div className="flex items-center">
+                <BookOpen className={`h-4 w-4 mr-3 ${activeContentType === 'materials' ? 'text-amber-600' : 'text-gray-400'}`} />
+                <span>Study Material</span>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                activeContentType === 'materials' ? 'bg-amber-200/70 text-amber-800' : 'bg-gray-100 text-gray-600'
+              }`}>
+                {materials.length}
               </span>
             </button>
 
@@ -577,6 +710,157 @@ const ClassroomView = () => {
           )}
         </div>
       )}
+
+      {/* STUDY MATERIAL & NOTES VIEW */}
+      {activeContentType === 'materials' && (() => {
+        const materialSubjects = ['All', ...new Set(materials.map(m => m.subject).filter(Boolean))];
+        const filteredMaterials = materials.filter(m => {
+          const matchesSubject = materialSubjectFilter === 'All' || m.subject.toLowerCase() === materialSubjectFilter.toLowerCase();
+          const q = materialSearch.toLowerCase();
+          const matchesSearch = !q || 
+            (m.title && m.title.toLowerCase().includes(q)) || 
+            (m.description && m.description.toLowerCase().includes(q)) || 
+            (m.fileName && m.fileName.toLowerCase().includes(q)) ||
+            (m.subject && m.subject.toLowerCase().includes(q));
+          return matchesSubject && matchesSearch;
+        });
+
+        return (
+          <div className="space-y-6">
+            {/* Filter and Search Bar */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              {/* Subject Pills */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-gray-400 mr-1">Subject:</span>
+                {materialSubjects.map(sub => (
+                  <button
+                    key={sub}
+                    onClick={() => setMaterialSubjectFilter(sub)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      materialSubjectFilter.toLowerCase() === sub.toLowerCase()
+                        ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/30'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {sub}
+                  </button>
+                ))}
+              </div>
+
+              {/* Search & Upload CTA */}
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                <div className="relative flex-1 md:w-60">
+                  <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Search notes, documents..."
+                    value={materialSearch}
+                    onChange={e => setMaterialSearch(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none bg-gray-50/50"
+                  />
+                </div>
+                <button
+                  onClick={handleOpenUploadMaterial}
+                  className="inline-flex items-center px-3.5 py-2 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl transition-colors whitespace-nowrap"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add
+                </button>
+              </div>
+            </div>
+
+            {/* Materials Grid */}
+            {filteredMaterials.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2">
+                {filteredMaterials.map(mat => {
+                  const badge = getFileBadge(mat.fileType);
+                  return (
+                    <div
+                      key={mat._id}
+                      className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all flex flex-col justify-between group"
+                    >
+                      <div className="p-6">
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-100">
+                              {mat.subject}
+                            </span>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold border ${badge.bg}`}>
+                              {badge.label}
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={() => handleDeleteMaterial(mat._id)}
+                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                            title="Delete Study Material"
+                          >
+                            <Trash className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        <h3 className="text-lg font-bold text-gray-900 line-clamp-1 mb-1.5" title={mat.title}>
+                          {mat.title}
+                        </h3>
+
+                        {mat.description && (
+                          <p className="text-xs text-gray-500 line-clamp-2 mb-4 leading-relaxed">
+                            {mat.description}
+                          </p>
+                        )}
+
+                        {/* File details */}
+                        <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 flex items-center justify-between text-xs text-gray-600 mb-2">
+                          <div className="flex items-center min-w-0 pr-2">
+                            <File className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
+                            <span className="truncate font-medium text-gray-700">{mat.fileName}</span>
+                          </div>
+                          <span className="font-mono text-[11px] text-gray-400 flex-shrink-0 font-semibold">
+                            {formatFileSize(mat.fileSize)}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center text-[11px] text-gray-400 mt-2">
+                          <Clock className="h-3.5 w-3.5 mr-1" />
+                          <span>Uploaded {new Date(mat.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                        </div>
+                      </div>
+
+                      {/* Action footer */}
+                      <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between gap-3">
+                        <a
+                          href={mat.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full flex items-center justify-center px-4 py-2 bg-white hover:bg-amber-500 hover:text-white border border-gray-200 hover:border-amber-500 rounded-xl text-xs font-bold text-gray-700 shadow-xs transition-all"
+                        >
+                          <Download className="h-3.5 w-3.5 mr-1.5" />
+                          View / Download Document
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-14 text-center border-2 border-dashed border-gray-200 rounded-2xl bg-white p-8">
+                <BookOpen className="mx-auto h-12 w-12 text-amber-300 mb-3" />
+                <h3 className="text-base font-bold text-gray-900">No study materials found</h3>
+                <p className="mt-1 text-xs text-gray-500 max-w-sm mx-auto">
+                  {materialSubjectFilter !== 'All' || materialSearch
+                    ? 'No notes match your filter or search criteria.'
+                    : 'Upload syllabus notes, documents, lecture slides, or references for your students.'}
+                </p>
+                <button
+                  onClick={handleOpenUploadMaterial}
+                  className="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 shadow-sm"
+                >
+                  <FolderPlus className="h-3.5 w-3.5 mr-1.5" /> Upload Material
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* STUDENTS ROSTER VIEW */}
       {activeContentType === 'students' && (
@@ -937,6 +1221,136 @@ const ClassroomView = () => {
                 <button type="button" onClick={() => setShowQuizModal(false)} className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50">Cancel</button>
                 <button type="submit" className="px-6 py-2.5 text-sm font-bold text-white bg-purple-600 rounded-xl hover:bg-purple-700 shadow-md shadow-purple-500/30">
                   Save & Publish Quiz
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* UPLOAD STUDY MATERIAL MODAL */}
+      {showMaterialModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-amber-50 text-amber-600 rounded-2xl">
+                  <FolderPlus className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Upload Study Material</h3>
+                  <p className="text-xs text-gray-500">Share lecture notes, PDFs, or slides with students</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowMaterialModal(false)}
+                className="text-gray-400 hover:text-gray-600 p-2 rounded-xl hover:bg-gray-100 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUploadMaterialSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Material Title *
+                </label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g., Chapter 1 - CPU Scheduling Algorithms"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  value={materialFormData.title}
+                  onChange={e => setMaterialFormData({ ...materialFormData, title: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Subject *
+                </label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g., Operating Systems"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  value={materialFormData.subject}
+                  onChange={e => setMaterialFormData({ ...materialFormData, subject: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Description / Topic Notes (Optional)
+                </label>
+                <textarea
+                  rows="3"
+                  placeholder="Brief overview of the material, recommended reading, or chapter sections..."
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  value={materialFormData.description}
+                  onChange={e => setMaterialFormData({ ...materialFormData, description: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Select Document / Notes File *
+                </label>
+                <div className="border-2 border-dashed border-gray-200 hover:border-amber-400 rounded-2xl p-6 text-center transition-colors bg-gray-50/50">
+                  <input
+                    type="file"
+                    id="material-file-upload"
+                    className="hidden"
+                    accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,image/*"
+                    onChange={e => {
+                      if (e.target.files && e.target.files[0]) {
+                        setMaterialFile(e.target.files[0]);
+                      }
+                    }}
+                  />
+                  <label htmlFor="material-file-upload" className="cursor-pointer flex flex-col items-center">
+                    <UploadCloud className="h-10 w-10 text-amber-500 mb-2" />
+                    {materialFile ? (
+                      <div className="text-center">
+                        <span className="text-xs font-bold text-gray-900 block truncate max-w-xs">{materialFile.name}</span>
+                        <span className="text-[11px] text-emerald-600 font-semibold mt-0.5 inline-block">
+                          {(materialFile.size / (1024 * 1024)).toFixed(2)} MB • Ready to upload
+                        </span>
+                      </div>
+                    ) : (
+                      <div>
+                        <span className="text-xs font-bold text-amber-600 hover:underline">Click to browse file</span>
+                        <p className="text-[11px] text-gray-400 mt-1">PDF, Word (DOCX), PPT slides, TXT, or images up to 25MB</p>
+                      </div>
+                    )}
+                  </label>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowMaterialModal(false)}
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={materialUploading}
+                  className="inline-flex items-center px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 shadow-md shadow-amber-500/20 disabled:opacity-50 transition-all"
+                >
+                  {materialUploading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white mr-2"></div>
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <FolderPlus className="h-4 w-4 mr-1.5" />
+                      Publish Material
+                    </>
+                  )}
                 </button>
               </div>
             </form>

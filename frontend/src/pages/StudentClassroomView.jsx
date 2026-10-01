@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import StatusBadge from '../components/StatusBadge';
 import SimilarityMeter from '../components/SimilarityMeter';
-import { Calendar, Clock, FileText, Upload, ArrowLeft, HelpCircle, Lock, Unlock, CheckCircle, Key, X, BookOpen } from 'lucide-react';
+import { Calendar, Clock, FileText, Upload, ArrowLeft, HelpCircle, Lock, Unlock, CheckCircle, Key, X, BookOpen, Download, File, Search, FolderOpen } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { io } from 'socket.io-client';
 
@@ -12,13 +12,18 @@ const StudentClassroomView = () => {
   const navigate = useNavigate();
   const [assignments, setAssignments] = useState([]);
   const [quizzes, setQuizzes] = useState([]);
+  const [materials, setMaterials] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [quizSubmissions, setQuizSubmissions] = useState([]);
   const [classroom, setClassroom] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Tab State
-  const [activeTab, setActiveTab] = useState('assignments'); // 'assignments' | 'quizzes'
+  // Tab State: 'assignments' | 'quizzes' | 'materials'
+  const [activeTab, setActiveTab] = useState('assignments');
+
+  // Study Material Filter State
+  const [materialSubjectFilter, setMaterialSubjectFilter] = useState('All');
+  const [materialSearch, setMaterialSearch] = useState('');
 
   // Password Modal State
   const [selectedQuizForPass, setSelectedQuizForPass] = useState(null);
@@ -39,6 +44,13 @@ const StudentClassroomView = () => {
         setQuizzes(quizRes.data || []);
       } catch (e) {
         console.error('Error fetching quizzes:', e);
+      }
+
+      try {
+        const matRes = await api.get(`/materials/classroom/${id}`);
+        setMaterials(matRes.data || []);
+      } catch (e) {
+        console.error('Error fetching materials:', e);
       }
 
       try {
@@ -86,8 +98,52 @@ const StudentClassroomView = () => {
       setQuizzes(prev => prev.filter(q => q._id !== deletedQuizId));
     });
 
+    socket.on('material_uploaded', (newMat) => {
+      setMaterials(prev => {
+        const exists = prev.some(m => m._id === newMat._id);
+        if (exists) return prev;
+        return [newMat, ...prev];
+      });
+      toast.info(`📚 New study material posted for ${newMat.subject}: "${newMat.title}"`, {
+        position: "bottom-right",
+        autoClose: 6000
+      });
+    });
+
+    socket.on('material_deleted', (deletedId) => {
+      setMaterials(prev => prev.filter(m => m._id !== deletedId));
+    });
+
     return () => socket.disconnect();
   }, [id]);
+
+  const formatFileSize = (bytes) => {
+    if (!bytes || bytes === 0) return '0 KB';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+  const getFileBadge = (fileType) => {
+    const type = (fileType || '').toLowerCase();
+    if (type === 'pdf') {
+      return { bg: 'bg-rose-50 text-rose-700 border-rose-200', label: 'PDF' };
+    }
+    if (['doc', 'docx'].includes(type)) {
+      return { bg: 'bg-blue-50 text-blue-700 border-blue-200', label: 'DOCX' };
+    }
+    if (['ppt', 'pptx'].includes(type)) {
+      return { bg: 'bg-amber-50 text-amber-700 border-amber-200', label: 'SLIDES' };
+    }
+    if (type === 'txt') {
+      return { bg: 'bg-gray-50 text-gray-700 border-gray-200', label: 'TEXT' };
+    }
+    if (type === 'image') {
+      return { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: 'IMAGE' };
+    }
+    return { bg: 'bg-indigo-50 text-indigo-700 border-indigo-200', label: 'FILE' };
+  };
 
   const getSubmissionForAssignment = (assignId) => {
     return submissions.find(s => s.assignmentId?._id === assignId || s.assignmentId === assignId);
@@ -190,28 +246,44 @@ const StudentClassroomView = () => {
       </div>
 
       {/* Tab switcher */}
-      <div className="flex bg-white p-1.5 rounded-2xl border border-gray-200 shadow-sm w-max mb-8 relative">
-        <div className={`absolute inset-y-1.5 w-[calc(50%-0.375rem)] bg-indigo-50 border border-indigo-100 rounded-xl shadow-sm transition-all duration-300 ease-in-out ${activeTab === 'assignments' ? 'left-1.5' : 'left-[calc(50%+0.1875rem)]'}`}></div>
-        
+      <div className="flex flex-wrap bg-white p-1.5 rounded-2xl border border-gray-200 shadow-sm w-max mb-8 gap-1.5">
         <button
           onClick={() => setActiveTab('assignments')}
-          className={`flex items-center px-6 py-2.5 rounded-xl text-sm font-bold transition-all relative z-10 ${
-            activeTab === 'assignments' ? 'text-indigo-700' : 'text-gray-500 hover:text-gray-700'
+          className={`flex items-center px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+            activeTab === 'assignments'
+              ? 'bg-indigo-50 text-indigo-700 border border-indigo-100 shadow-xs'
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
           }`}
         >
           <FileText className={`h-4 w-4 mr-2 ${activeTab === 'assignments' ? 'text-indigo-600' : 'text-gray-400'}`} />
           Assignments
-          <span className="ml-2 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">{assignments.length}</span>
+          <span className={`ml-2 py-0.5 px-2 rounded-full text-xs font-bold ${activeTab === 'assignments' ? 'bg-indigo-200/60 text-indigo-800' : 'bg-gray-100 text-gray-600'}`}>{assignments.length}</span>
         </button>
+
         <button
           onClick={() => setActiveTab('quizzes')}
-          className={`flex items-center px-6 py-2.5 rounded-xl text-sm font-bold transition-all relative z-10 ${
-            activeTab === 'quizzes' ? 'text-purple-700' : 'text-gray-500 hover:text-gray-700'
+          className={`flex items-center px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+            activeTab === 'quizzes'
+              ? 'bg-purple-50 text-purple-700 border border-purple-100 shadow-xs'
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
           }`}
         >
           <HelpCircle className={`h-4 w-4 mr-2 ${activeTab === 'quizzes' ? 'text-purple-600' : 'text-gray-400'}`} />
           Quizzes
-          <span className="ml-2 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">{quizzes.length}</span>
+          <span className={`ml-2 py-0.5 px-2 rounded-full text-xs font-bold ${activeTab === 'quizzes' ? 'bg-purple-200/60 text-purple-800' : 'bg-gray-100 text-gray-600'}`}>{quizzes.length}</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('materials')}
+          className={`flex items-center px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+            activeTab === 'materials'
+              ? 'bg-amber-50 text-amber-700 border border-amber-100 shadow-xs'
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          <BookOpen className={`h-4 w-4 mr-2 ${activeTab === 'materials' ? 'text-amber-600' : 'text-gray-400'}`} />
+          Notes & Materials
+          <span className={`ml-2 py-0.5 px-2 rounded-full text-xs font-bold ${activeTab === 'materials' ? 'bg-amber-200/60 text-amber-800' : 'bg-gray-100 text-gray-600'}`}>{materials.length}</span>
         </button>
       </div>
 
@@ -407,6 +479,138 @@ const StudentClassroomView = () => {
           )}
         </div>
       )}
+
+      {/* STUDY MATERIAL & NOTES LIST */}
+      {activeTab === 'materials' && (() => {
+        const materialSubjects = ['All', ...new Set(materials.map(m => m.subject).filter(Boolean))];
+        const filteredMaterials = materials.filter(m => {
+          const matchesSubject = materialSubjectFilter === 'All' || m.subject.toLowerCase() === materialSubjectFilter.toLowerCase();
+          const q = materialSearch.toLowerCase();
+          const matchesSearch = !q || 
+            (m.title && m.title.toLowerCase().includes(q)) || 
+            (m.description && m.description.toLowerCase().includes(q)) || 
+            (m.fileName && m.fileName.toLowerCase().includes(q)) ||
+            (m.subject && m.subject.toLowerCase().includes(q));
+          return matchesSubject && matchesSearch;
+        });
+
+        return (
+          <div className="space-y-6">
+            {/* Filter and Search Bar */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              {/* Subject Filter Pills */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-gray-400 mr-1">Subject:</span>
+                {materialSubjects.map(sub => (
+                  <button
+                    key={sub}
+                    onClick={() => setMaterialSubjectFilter(sub)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      materialSubjectFilter.toLowerCase() === sub.toLowerCase()
+                        ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/30'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {sub}
+                  </button>
+                ))}
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative w-full md:w-72">
+                <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search subject, topics, notes..."
+                  value={materialSearch}
+                  onChange={e => setMaterialSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none bg-gray-50/50"
+                />
+              </div>
+            </div>
+
+            {/* Materials Grid */}
+            {filteredMaterials.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {filteredMaterials.map(mat => {
+                  const badge = getFileBadge(mat.fileType);
+                  return (
+                    <div
+                      key={mat._id}
+                      className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col justify-between group"
+                    >
+                      <div className="p-6">
+                        <div className="flex justify-between items-start mb-3">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-100">
+                            {mat.subject}
+                          </span>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold border ${badge.bg}`}>
+                            {badge.label}
+                          </span>
+                        </div>
+
+                        <h3 className="text-lg font-bold text-gray-900 line-clamp-1 mb-1.5" title={mat.title}>
+                          {mat.title}
+                        </h3>
+
+                        {mat.description && (
+                          <p className="text-xs text-gray-500 line-clamp-3 mb-4 leading-relaxed">
+                            {mat.description}
+                          </p>
+                        )}
+
+                        {/* File Details Box */}
+                        <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 flex items-center justify-between text-xs text-gray-600 mt-2">
+                          <div className="flex items-center min-w-0 pr-2">
+                            <File className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
+                            <span className="truncate font-medium text-gray-700">{mat.fileName}</span>
+                          </div>
+                          <span className="font-mono text-[11px] text-gray-400 flex-shrink-0 font-semibold">
+                            {formatFileSize(mat.fileSize)}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center text-[11px] text-gray-400 mt-3">
+                          <Clock className="h-3.5 w-3.5 mr-1" />
+                          <span>Uploaded {new Date(mat.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                          {mat.teacherId?.fullName && (
+                            <span className="ml-auto text-gray-500 font-medium truncate max-w-[120px]">
+                              by {mat.teacherId.fullName}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Download Action Footer */}
+                      <div className="p-4 bg-gray-50/50 border-t border-gray-100">
+                        <a
+                          href={mat.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full flex items-center justify-center px-4 py-2.5 bg-white hover:bg-amber-500 hover:text-white border border-gray-200 hover:border-amber-500 rounded-xl text-xs font-bold text-gray-700 shadow-xs transition-all"
+                        >
+                          <Download className="h-3.5 w-3.5 mr-2" />
+                          View / Download Document
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-14 text-center border-2 border-dashed border-gray-200 rounded-2xl bg-white p-8">
+                <BookOpen className="mx-auto h-12 w-12 text-amber-300 mb-3" />
+                <h3 className="text-base font-bold text-gray-900">No study materials available yet</h3>
+                <p className="mt-1 text-xs text-gray-500 max-w-sm mx-auto">
+                  {materialSubjectFilter !== 'All' || materialSearch
+                    ? 'No notes match your subject filter or search keyword.'
+                    : 'Your instructor has not uploaded any documents or lecture notes for this classroom yet.'}
+                </p>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* PASSWORD VERIFICATION MODAL */}
       {selectedQuizForPass && (
