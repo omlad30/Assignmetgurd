@@ -5,6 +5,10 @@ const User = require('./models/User');
 const Assignment = require('./models/Assignment');
 const Submission = require('./models/Submission');
 const Classroom = require('./models/Classroom');
+const Quiz = require('./models/Quiz');
+const QuizSubmission = require('./models/QuizSubmission');
+const Material = require('./models/Material');
+const DraftAttempt = require('./models/DraftAttempt');
 let admin = null;
 
 try {
@@ -16,6 +20,8 @@ try {
 async function resetAllData() {
   console.log('--- STARTING COMPLETE DATA RESET ---');
 
+  const adminEmail = process.env.ADMIN_EMAIL || 'ladom3003@gmail.com';
+
   // 1. Clear MongoDB Collections
   try {
     if (process.env.MONGODB_URI) {
@@ -23,15 +29,21 @@ async function resetAllData() {
       console.log('✔ Connected to MongoDB');
 
       await Promise.all([
-        User.deleteMany({ email: { $ne: 'ladom3003@gmail.com' } }),
+        // Keep ONLY the admin user, delete all students and teachers
+        User.deleteMany({ email: { $ne: adminEmail } }),
         Classroom.deleteMany({}),
         Assignment.deleteMany({}),
         Submission.deleteMany({}),
-        require('./models/Quiz').deleteMany({}),
-        require('./models/QuizSubmission').deleteMany({})
+        Quiz.deleteMany({}),
+        QuizSubmission.deleteMany({}),
+        Material.deleteMany({}),
+        DraftAttempt.deleteMany({})
       ]);
 
-      console.log('✔ Cleared MongoDB (Users, Classrooms, Assignments, Submissions)');
+      // Ensure the remaining admin user has role 'admin'
+      await User.updateOne({ email: adminEmail }, { $set: { role: 'admin' } });
+
+      console.log(`✔ Cleared MongoDB collections (Deleted all students, teachers, assignments, submissions, quizzes, materials). Kept Admin: ${adminEmail}`);
     } else {
       console.log('⚠ MONGODB_URI not found in .env, skipping MongoDB cleanup.');
     }
@@ -48,14 +60,14 @@ async function resetAllData() {
     try {
       const listUsersResult = await admin.auth().listUsers(1000);
       const uidsToDelete = listUsersResult.users
-        .filter(u => u.email !== 'ladom3003@gmail.com')
+        .filter(u => u.email !== adminEmail)
         .map(u => u.uid);
 
       if (uidsToDelete.length > 0) {
         await admin.auth().deleteUsers(uidsToDelete);
-        console.log(`✔ Cleared ${uidsToDelete.length} Firebase Auth users (kept ladom3003@gmail.com if present)`);
+        console.log(`✔ Cleared ${uidsToDelete.length} Firebase Auth users (Kept Admin: ${adminEmail})`);
       } else {
-        console.log('✔ No Firebase users found');
+        console.log(`✔ No extraneous Firebase users to delete (Admin kept: ${adminEmail})`);
       }
     } catch (err) {
       console.log('⚠ Firebase user cleanup skipped:', err.message);
