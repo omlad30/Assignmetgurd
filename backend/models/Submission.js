@@ -49,6 +49,18 @@ const submissionSchema = new mongoose.Schema({
   grade: {
     type: String,
   },
+  suggestedGrade: {
+    type: String,
+    default: '',
+  },
+  conceptScore: {
+    type: Number,
+    default: null,
+  },
+  rubricFeedback: {
+    type: String,
+    default: '',
+  },
   submittedAt: {
     type: Date,
     default: Date.now,

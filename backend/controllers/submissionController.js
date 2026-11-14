@@ -4,7 +4,7 @@ const User = require('../models/User');
 const DraftAttempt = require('../models/DraftAttempt');
 const extractText = require('../utils/extractText');
 const { checkDuplicate } = require('../utils/duplicateCheck');
-const { checkAiContent, checkAiContentDraft } = require('../utils/geminiCheck');
+const { checkAiContent, checkAiContentDraft, evaluateWithExpectedAnswer } = require('../utils/geminiCheck');
 const sendEmail = require('../utils/sendEmail');
 const cloudinary = require('../config/cloudinary');
 
@@ -36,8 +36,9 @@ exports.checkDraft = async (req, res) => {
       return res.status(400).json({ message: err.message });
     }
 
-    if (!text || text.trim().length === 0) {
-      return res.status(400).json({ message: 'Could not extract text or file is empty.' });
+    const words = text ? text.trim().split(/\s+/).filter(Boolean) : [];
+    if (!text || text.trim().length < 50 || words.length < 15) {
+      return res.status(400).json({ message: 'Draft rejected: Document is empty or contains insufficient text (Minimum 15 words required).' });
     }
 
     // 2. Duplicate check
@@ -159,10 +160,14 @@ exports.submitAssignment = async (req, res) => {
           return; // Stop processing
         }
 
-        if (!text || text.trim().length === 0) {
+        const words = text ? text.trim().split(/\s+/).filter(Boolean) : [];
+        if (!text || text.trim().length < 50 || words.length < 15) {
           submission.status = 'rejected';
-          submission.rejectionReason = 'Could not extract text or file is empty.';
+          submission.rejectionReason = 'Submission rejected: Document is empty or contains insufficient text (Minimum 15 words required). Please upload a valid document.';
           await submission.save();
+          if (req.io) {
+            req.io.to(assignmentId.toString()).emit('new_submission', submission);
+          }
           return;
         }
 
@@ -182,6 +187,20 @@ exports.submitAssignment = async (req, res) => {
             subject: `Submission Under Review: ${assignment.title}`,
             message: `Hello,\n\nYour submission for "${assignment.title}" has been flagged and placed under review by your teacher.\nReason: ${rejectionReason}\n\nPlease wait for your teacher's decision.`,
           });
+        }
+
+        // Optional AI Grading Evaluation if teacher provided Expected Answer
+        if (status === 'accepted' && assignment.expectedAnswer && assignment.expectedAnswer.trim().length > 0) {
+          try {
+            const evalResult = await evaluateWithExpectedAnswer(text, assignment.expectedAnswer);
+            if (evalResult) {
+              submission.conceptScore = evalResult.conceptScore;
+              submission.rubricFeedback = evalResult.feedback;
+              submission.suggestedGrade = ((evalResult.conceptScore / 100) * 10).toFixed(1);
+            }
+          } catch (evalErr) {
+            console.error("AI Expected Answer evaluation failed:", evalErr);
+          }
         }
 
         // Update submission with final data

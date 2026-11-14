@@ -82,4 +82,51 @@ const checkAiContentDraft = async (text) => {
   }
 };
 
-module.exports = { checkAiContent, checkAiContentDraft };
+const evaluateWithExpectedAnswer = async (studentText, expectedAnswer) => {
+  if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key' || !expectedAnswer || !expectedAnswer.trim()) {
+    return null;
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    const prompt = `You are an academic professor grading a student assignment.
+Compare the Student Submission against the Teacher's Expected Answer / Solution Key.
+Evaluate how thoroughly and accurately the student covered the core concepts and required explanation.
+
+Return ONLY valid JSON matching this exact schema:
+{
+  "conceptScore": <number from 0 to 100 representing accuracy and completeness>,
+  "feedback": "<concise 1-2 sentence feedback explaining what key points were covered well and what was missing>"
+}
+
+Teacher's Expected Answer:
+"""
+${expectedAnswer.substring(0, 5000)}
+"""
+
+Student Submission Text:
+"""
+${studentText.substring(0, 10000)}
+"""`;
+
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+
+    const jsonMatch = responseText.match(/```json\n([\s\S]*?)\n```/) || responseText.match(/{[\s\S]*?}/);
+    const parseableString = jsonMatch && jsonMatch[1] ? jsonMatch[1] : (jsonMatch ? jsonMatch[0] : responseText);
+    const parsed = JSON.parse(parseableString);
+
+    const score = Math.min(100, Math.max(0, parseInt(parsed.conceptScore, 10) || 0));
+    return {
+      conceptScore: score,
+      feedback: parsed.feedback || 'Evaluated against teacher model answer.'
+    };
+  } catch (error) {
+    console.error("Gemini Expected Answer Evaluation Error:", error.message);
+    return null;
+  }
+};
+
+module.exports = { checkAiContent, checkAiContentDraft, evaluateWithExpectedAnswer };

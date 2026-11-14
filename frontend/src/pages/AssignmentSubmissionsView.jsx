@@ -162,6 +162,7 @@ const AssignmentSubmissionsView = () => {
 
   const getSuggestedGrade = (submission) => {
     if (submission.grade) return submission.grade;
+    if (submission.suggestedGrade) return submission.suggestedGrade;
     const sim = submission.similarityScore || 0;
     if (sim >= 90) return '5';
     if (sim >= 80) return '5';
@@ -337,25 +338,32 @@ const AssignmentSubmissionsView = () => {
                       </td>
                       <td className="whitespace-nowrap px-3 py-4">
                         {submission.status === 'accepted' || submission.status === 'quarantine' ? (
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="text"
-                              id={`grade-${submission._id}`}
-                              className="w-16 rounded-xl border border-gray-200 bg-white/80 shadow-inner focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 sm:text-sm p-1.5 text-center transition-all font-medium"
-                              defaultValue={getSuggestedGrade(submission)}
-                              placeholder="A, 90"
-                            />
-                            <button
-                              onClick={() => {
-                                const val = document.getElementById(`grade-${submission._id}`).value;
-                                if (val !== submission.grade) {
-                                  handleGradeChange(submission._id, val);
-                                }
-                              }}
-                              className="text-xs font-medium bg-white hover:bg-primary-50 hover:text-primary-700 text-gray-600 px-3 py-2 rounded-xl border border-gray-200 shadow-sm hover:shadow transition-all"
-                            >
-                              Save
-                            </button>
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                id={`grade-${submission._id}`}
+                                className="w-16 rounded-xl border border-gray-200 bg-white/80 shadow-inner focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 sm:text-sm p-1.5 text-center transition-all font-medium"
+                                defaultValue={getSuggestedGrade(submission)}
+                                placeholder="A, 90"
+                              />
+                              <button
+                                onClick={() => {
+                                  const val = document.getElementById(`grade-${submission._id}`).value;
+                                  if (val !== submission.grade) {
+                                    handleGradeChange(submission._id, val);
+                                  }
+                                }}
+                                className="text-xs font-medium bg-white hover:bg-primary-50 hover:text-primary-700 text-gray-600 px-3 py-2 rounded-xl border border-gray-200 shadow-sm hover:shadow transition-all"
+                              >
+                                Save
+                              </button>
+                            </div>
+                            {submission.suggestedGrade && !submission.grade && (
+                              <div className="flex items-center gap-1 text-[11px] text-purple-600 font-semibold" title={submission.rubricFeedback || "AI Evaluated against teacher expected answer"}>
+                                <span>✨ AI: {submission.suggestedGrade}/10</span>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <span className="text-gray-400 italic text-sm">N/A</span>

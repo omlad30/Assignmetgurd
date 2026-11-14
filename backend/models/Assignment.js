@@ -26,6 +26,10 @@ const assignmentSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
+  expectedAnswer: {
+    type: String,
+    default: '',
+  },
   totalSubmissions: {
     type: Number,
     default: 0,

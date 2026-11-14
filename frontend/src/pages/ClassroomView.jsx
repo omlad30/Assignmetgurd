@@ -42,7 +42,7 @@ const ClassroomView = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState(null);
   const [formData, setFormData] = useState({
-    title: '', subject: defaultSubject, description: '', deadline: ''
+    title: '', subject: defaultSubject, description: '', deadline: '', expectedAnswer: ''
   });
 
   // Quiz Modal State
@@ -199,7 +199,8 @@ const ClassroomView = () => {
       title: '',
       subject: defaultSubject,
       description: '',
-      deadline: ''
+      deadline: '',
+      expectedAnswer: ''
     });
     setShowModal(true);
   };
@@ -213,7 +214,8 @@ const ClassroomView = () => {
       title: assignment.title || '',
       subject: assignment.subject || defaultSubject,
       description: assignment.description || '',
-      deadline: formattedDeadline
+      deadline: formattedDeadline,
+      expectedAnswer: assignment.expectedAnswer || ''
     });
     setShowModal(true);
   };
@@ -230,7 +232,7 @@ const ClassroomView = () => {
       }
       setShowModal(false);
       setEditingAssignment(null);
-      setFormData({ title: '', subject: defaultSubject, description: '', deadline: '' });
+      setFormData({ title: '', subject: defaultSubject, description: '', deadline: '', expectedAnswer: '' });
       fetchClassroomAndData();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to save assignment');
@@ -1045,7 +1047,24 @@ const ClassroomView = () => {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
-                  <textarea className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary-500 resize-none" rows="3" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}></textarea>
+                  <textarea className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary-500 resize-none" rows="2" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}></textarea>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Expected Answer / Model Solution <span className="text-xs text-purple-600 font-medium">(Optional — Enables AI Grading)</span>
+                    </label>
+                  </div>
+                  <textarea
+                    className="w-full border border-purple-200 bg-purple-50/20 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-purple-500 resize-none text-sm placeholder:text-gray-400"
+                    rows="3"
+                    placeholder="e.g. Students must explain ACID properties, give an example of transaction rollback, and define isolation levels..."
+                    value={formData.expectedAnswer}
+                    onChange={e => setFormData({ ...formData, expectedAnswer: e.target.value })}
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    If provided, AssignGuard will automatically compare student submissions against this answer key and suggest a grade.
+                  </p>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Deadline / Due Date</label>

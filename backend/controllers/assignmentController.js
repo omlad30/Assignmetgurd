@@ -2,13 +2,14 @@ const Assignment = require('../models/Assignment');
 
 exports.createAssignment = async (req, res) => {
   try {
-    const { title, subject, description, deadline, classroomId } = req.body;
+    const { title, subject, description, deadline, classroomId, expectedAnswer } = req.body;
 
     const assignment = await Assignment.create({
       title,
       subject,
       description,
       deadline,
+      expectedAnswer: expectedAnswer ? expectedAnswer.trim() : '',
       teacherId: req.user._id,
       classroomId: classroomId || null,
     });
@@ -77,11 +78,12 @@ exports.updateAssignment = async (req, res) => {
       return res.status(401).json({ message: 'Not authorized to edit this assignment' });
     }
 
-    const { title, subject, description, deadline } = req.body;
+    const { title, subject, description, deadline, expectedAnswer } = req.body;
     if (title) assignment.title = title;
     if (subject) assignment.subject = subject;
     if (description !== undefined) assignment.description = description;
     if (deadline) assignment.deadline = deadline;
+    if (expectedAnswer !== undefined) assignment.expectedAnswer = expectedAnswer ? expectedAnswer.trim() : '';
 
     await assignment.save();
     res.json(assignment);

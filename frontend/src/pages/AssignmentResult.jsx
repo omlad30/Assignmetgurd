@@ -62,6 +62,12 @@ const AssignmentResult = () => {
             <div className="bg-emerald-50 p-6 rounded-xl border border-emerald-200 mb-6">
               <h3 className="text-sm font-medium text-emerald-800 uppercase tracking-wider mb-2">Final Grade</h3>
               <p className="text-3xl font-extrabold text-emerald-600">{submission.grade}</p>
+              {submission.rubricFeedback && (
+                <div className="mt-3 text-sm text-emerald-900 bg-white/60 p-3 rounded-lg border border-emerald-100">
+                  <span className="font-bold">Evaluation Feedback: </span>
+                  {submission.rubricFeedback}
+                </div>
+              )}
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -69,8 +75,16 @@ const AssignmentResult = () => {
               <h3 className="text-sm font-medium text-gray-500 mb-4 uppercase tracking-wider">Similarity Analysis</h3>
               <SimilarityMeter score={submission.similarityScore} label="Matched with peers" />
               {submission.status === 'rejected' && (
-                <div className="mt-3 text-sm text-red-600 font-medium">
-                  {submission.rejectionReason}
+                <div className="mt-3 p-3.5 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-sm text-red-700 font-semibold">{submission.rejectionReason}</p>
+                  {submission.assignmentId?._id && (
+                    <Link
+                      to={`/submit-assignment/${submission.assignmentId._id}`}
+                      className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-red-700 hover:text-red-800 underline transition-colors"
+                    >
+                      Click here to re-upload your assignment &rarr;
+                    </Link>
+                  )}
                 </div>
               )}
             </div>
