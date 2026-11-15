@@ -174,7 +174,7 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex lg:items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8 relative overflow-x-hidden py-10">
+    <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center bg-gray-50 px-4 sm:px-6 lg:px-8 relative overflow-x-hidden py-10">
       <div className="absolute top-10 -left-10 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob"></div>
       <div className="absolute top-0 right-10 w-96 h-96 bg-yellow-300 rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob animation-delay-2000"></div>
       <div className="absolute -bottom-8 left-1/2 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob animation-delay-4000"></div>
