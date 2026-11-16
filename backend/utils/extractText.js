@@ -9,7 +9,7 @@ const extractWithGemini = async (fileBuffer, mimetype) => {
   }
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-  const prompt = "You are an OCR tool. Extract and return all the text from this document/image exactly as written. Do not add any conversational text or markdown. If there is no readable text, return the exact string 'NO_TEXT_FOUND'.";
+  const prompt = "You are an OCR and multilingual transcription tool. Extract and return all the text from this document/image exactly as written (supports English, programming source code, and Indian regional languages like Hindi, Marathi, etc.). Do not add any conversational text or markdown. If there is no readable text, return the exact string 'NO_TEXT_FOUND'.";
   const parts = [
     { inlineData: { data: fileBuffer.toString("base64"), mimeType: mimetype } }
   ];
@@ -71,12 +71,21 @@ const extractTextRaw = async (fileBuffer, mimetype) => {
       // Use Tesseract for direct images first to save Gemini Credits
       let text = await extractWithTesseract(fileBuffer);
       if (text.length < 20) {
-        // Fallback to Gemini if Tesseract fails to read handwriting
+        // Fallback to Gemini if Tesseract fails to read handwriting or regional language
         text = await extractWithGemini(fileBuffer, mimetype);
       }
       return text;
+    } else if (
+      mimetype.startsWith('text/') ||
+      mimetype === 'application/javascript' ||
+      mimetype === 'application/x-javascript' ||
+      mimetype === 'application/json' ||
+      mimetype === 'application/octet-stream'
+    ) {
+      // Source code or plain text file (.py, .java, .cpp, .c, .js, .txt)
+      return fileBuffer.toString('utf-8');
     } else {
-      throw new Error('Unsupported file format. Only PDF, DOCX, and Images are allowed.');
+      throw new Error('Unsupported file format. Allowed: PDF, Word (DOCX), Images, Source Code (.py, .java, .cpp, .js), and Text files.');
     }
   } catch (error) {
     throw new Error(`Text extraction failed: ${error.message}`);

@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import { io } from 'socket.io-client';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { generateIntegrityCertificate } from '../utils/generateCertificate';
 
 const AssignmentSubmissionsView = () => {
   const { id } = useParams();
@@ -376,6 +377,13 @@ const AssignmentSubmissionsView = () => {
                             <button onClick={() => handleStatusChange(submission._id, 'rejected')} className="text-rose-700 hover:text-white hover:bg-rose-600 border border-rose-200 bg-rose-50 px-3 py-1.5 rounded-xl transition-all shadow-sm">Reject</button>
                           </div>
                         )}
+                        <button
+                          onClick={() => generateIntegrityCertificate(submission, assignment)}
+                          className="text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-xl inline-flex items-center transition-all text-xs font-semibold"
+                          title="Download Official Integrity & Evaluation Certificate (PDF)"
+                        >
+                          <FileText className="h-4 w-4 mr-1" /> PDF Report
+                        </button>
                         <a
                           href={
                             submission.fileUrl.match(/\.(docx|doc)$/i)

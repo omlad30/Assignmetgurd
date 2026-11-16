@@ -16,6 +16,7 @@ const checkAiContent = async (text) => {
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const prompt = `You are an academic integrity checker.
+    The text may be in English, source code, or Indian regional languages (e.g. Hindi, Marathi).
     Analyze this assignment and return ONLY valid JSON:
     {
       "ai_probability": <number 0 to 100>,
@@ -92,7 +93,8 @@ const evaluateWithExpectedAnswer = async (studentText, expectedAnswer) => {
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const prompt = `You are an academic professor grading a student assignment.
-Compare the Student Submission against the Teacher's Expected Answer / Solution Key.
+The submission may be in English, programming source code, or Indian regional languages (e.g. Hindi, Marathi).
+Compare the Student Submission conceptually against the Teacher's Expected Answer / Solution Key, translating and cross-referencing concepts if necessary.
 Evaluate how thoroughly and accurately the student covered the core concepts and required explanation.
 
 Return ONLY valid JSON matching this exact schema:

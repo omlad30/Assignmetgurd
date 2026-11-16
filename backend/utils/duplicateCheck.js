@@ -1,5 +1,6 @@
 const natural = require('natural');
 const TfIdf = natural.TfIdf;
+const { isCodeContent, normalizeCode } = require('./codeTokenizer');
 
 function cosineSimilarity(vecA, vecB) {
   let dotProduct = 0;
@@ -16,16 +17,37 @@ function cosineSimilarity(vecA, vecB) {
   return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-const checkDuplicate = (newText, previousSubmissions) => {
-  if (!previousSubmissions || previousSubmissions.length === 0) {
-    return { isDuplicate: false, similarityScore: 0, matchedWith: null };
+// Unicode-aware word extractor for multilingual text (Hindi, Marathi, regional scripts)
+function prepareTextForVectorization(text, isCode) {
+  if (!text) return '';
+  if (isCode) {
+    return normalizeCode(text);
   }
 
+  // If text contains Devanagari or other Indic Unicode characters, normalize spacing
+  if (/[\u0900-\u0D7F]/.test(text)) {
+    // Preserve Unicode letters and numbers, normalizing punctuation
+    return text.replace(/[^\p{L}\p{N}\s]+/gu, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  return text;
+}
+
+const checkDuplicate = (newText, previousSubmissions) => {
+  if (!previousSubmissions || previousSubmissions.length === 0) {
+    return { isDuplicate: false, similarityScore: 0, matchedWith: null, isCode: false };
+  }
+
+  const isCode = isCodeContent(newText);
+  const targetText = prepareTextForVectorization(newText, isCode);
+
   const tfidf = new TfIdf();
-  tfidf.addDocument(newText); // Document 0
+  tfidf.addDocument(targetText); // Document 0
 
   previousSubmissions.forEach(sub => {
-    tfidf.addDocument(sub.extractedText || ''); // Document 1, 2, ...
+    const rawText = sub.extractedText || '';
+    const docText = prepareTextForVectorization(rawText, isCode);
+    tfidf.addDocument(docText); // Document 1, 2, ...
   });
 
   const numDocs = previousSubmissions.length + 1;
@@ -61,7 +83,8 @@ const checkDuplicate = (newText, previousSubmissions) => {
   return {
     isDuplicate: highestSimilarity >= 65,
     similarityScore: Math.round(highestSimilarity),
-    matchedWith: matchedStudentId
+    matchedWith: matchedStudentId,
+    isCode
   };
 };
 

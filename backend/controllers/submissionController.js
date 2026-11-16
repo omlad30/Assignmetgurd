@@ -206,6 +206,7 @@ exports.submitAssignment = async (req, res) => {
         // Update submission with final data
         submission.extractedText = text;
         submission.similarityScore = duplicateResult.similarityScore;
+        submission.isCode = duplicateResult.isCode || false;
         submission.matchedWithStudentId = duplicateResult.matchedWith;
         submission.status = status;
         submission.rejectionReason = rejectionReason;

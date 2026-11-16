@@ -22,6 +22,10 @@ const submissionSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  isCode: {
+    type: Boolean,
+    default: false,
+  },
   matchedWithStudentId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

@@ -32,15 +32,19 @@ const SubmitAssignment = () => {
 
   const validateAndSetFile = (selectedFile) => {
     if (selectedFile) {
+      const ext = selectedFile.name.split('.').pop().toLowerCase();
+      const codeExts = ['py', 'java', 'cpp', 'c', 'js', 'jsx', 'ts', 'txt', 'html', 'css'];
       if (
         selectedFile.type === 'application/pdf' ||
         selectedFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
         selectedFile.type === 'application/msword' ||
-        selectedFile.type.startsWith('image/')
+        selectedFile.type.startsWith('image/') ||
+        selectedFile.type.startsWith('text/') ||
+        codeExts.includes(ext)
       ) {
         setFile(selectedFile);
       } else {
-        toast.error('Only PDF, DOCX, and Image files are supported');
+        toast.error('Supported formats: PDF, Word DOCX, Images, and Source Code (.py, .java, .cpp, .c, .js)');
       }
     }
   };
@@ -217,7 +221,7 @@ const SubmitAssignment = () => {
                       onDrop={handleDrop}
                       className={`relative cursor-pointer flex flex-col items-center justify-center p-12 border-2 border-dashed ${isDragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-white'} transition-colors duration-200 min-h-[200px]`}
                     >
-                      <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept=".pdf,.doc,.docx,image/*" />
+                      <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept=".pdf,.doc,.docx,image/*,.py,.java,.cpp,.c,.js,.jsx,.ts,.txt" />
                       
                       {file ? (
                         <div className="flex flex-col items-center z-10">

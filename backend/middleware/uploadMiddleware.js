@@ -4,15 +4,20 @@ const multer = require('multer');
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
+  const ext = file.originalname.split('.').pop().toLowerCase();
+  const codeExtensions = ['py', 'java', 'cpp', 'c', 'js', 'jsx', 'ts', 'txt', 'html', 'css', 'json'];
+
   if (
     file.mimetype === 'application/pdf' ||
     file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
     file.mimetype === 'application/msword' ||
-    file.mimetype.startsWith('image/')
+    file.mimetype.startsWith('image/') ||
+    file.mimetype.startsWith('text/') ||
+    codeExtensions.includes(ext)
   ) {
     cb(null, true);
   } else {
-    cb(new Error('Only PDF, DOCX, and Image files are allowed!'), false);
+    cb(new Error('Only PDF, DOCX, Images, and Source Code (.py, .java, .cpp, .js, .txt) files are allowed!'), false);
   }
 };
 

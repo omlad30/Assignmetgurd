@@ -3,8 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../utils/api';
 import StatusBadge from '../components/StatusBadge';
 import SimilarityMeter from '../components/SimilarityMeter';
-import { Download, ArrowLeft, AlertTriangle } from 'lucide-react';
+import { Download, ArrowLeft, AlertTriangle, FileText, CheckCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { generateIntegrityCertificate } from '../utils/generateCertificate';
 
 const AssignmentResult = () => {
   const { id } = useParams();
@@ -120,11 +121,20 @@ const AssignmentResult = () => {
               <span className="text-sm text-gray-500">Submitted at: </span>
               <span className="text-sm font-medium text-gray-900">{new Date(submission.submittedAt).toLocaleString('en-IN')}</span>
             </div>
-            {submission.fileUrl && (
-              <a href={submission.fileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition w-full sm:w-auto justify-center">
-                <Download className="mr-2 h-4 w-4" /> Download Original File
-              </a>
-            )}
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <button
+                onClick={() => generateIntegrityCertificate(submission)}
+                className="inline-flex items-center justify-center px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md shadow-purple-500/20 text-sm font-bold rounded-xl transition-all"
+                title="Download Official Academic Integrity & Evaluation Report (PDF)"
+              >
+                <FileText className="mr-2 h-4 w-4" /> Download Official Report (PDF)
+              </button>
+              {submission.fileUrl && (
+                <a href={submission.fileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 transition justify-center">
+                  <Download className="mr-2 h-4 w-4" /> Original File
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </div>
